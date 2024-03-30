@@ -210,14 +210,15 @@ int main(int argc, char **argv)
   Fl::scheme("gtk+");
   int pad = 10;
   Fl_Window *win = new Fl_Window(1200, 800, "Calcedit");
+  win->resizable(win);
 
-  win->begin();
+  auto tile = new Fl_Tile(0, 0, 1200, 800);
 
-  auto group = new Fl_Group(0, 0, 1200, 800, "Complex Resizing");
-  // create the buttons
+  auto box = new Fl_Box(0, 0, 1200, 800);
+  tile->resizable(box);
 
   resultBuffer = new Fl_Text_Buffer();
-  result = new TextDisplay(10, 10, 200, 780);
+  result = new TextDisplay(0, 0, 200, 800);
   result->buffer(resultBuffer);
   result->linenumber_width(30);
   result->linenumber_format("%d");
@@ -225,21 +226,19 @@ int main(int argc, char **argv)
   result->callback(scrollCallback);
 
   editBuffer = new Fl_Text_Buffer();
-  edit = new TextEdit(220, 10, 1200-430, 780);
+  edit = new TextEdit(200, 0, 800, 800);
   edit->buffer(editBuffer);
   edit->linenumber_width(30);
   edit->linenumber_format("%d");
   edit->callback(scrollCallback);
 
-  tree = new Fl_Tree(220+1200-430+10, 10, 190, 780);
-  tree->begin();
+  tree = new Fl_Tree(1000, 0, 200, 800);
   tree->root_label("Variables");
-  tree->end();
 
   editBuffer->add_modify_callback(editCallback, 0);
 
-  group->resizable(edit);
-  win->resizable(group);
+  tile->end();
+
   win->end();
 
   //win->size_range(win->w(), 600);
