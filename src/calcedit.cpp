@@ -15,6 +15,8 @@
 #include <FL/fl_ask.H>
 #include <FL/Fl_Text_Editor.H>
 #include <FL/Fl_Tree.H>
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Tile.H>
 
 #include "exprtk.hpp"
 
@@ -133,8 +135,9 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
   tree->clear();
   tree->begin();
   std::cout << "Callback\n";
-  //auto lines = split_string_by_newline(editBuffer->text());
   auto lines = split(editBuffer->text(), "\n");
+  //std::vector<std::string> lines;
+  //lines.push_back(editBuffer->text());
   std::cout << "# lines = " << lines.size() << std::endl;
   std::string resultString;
   std::map<std::string, double> variables;
@@ -167,7 +170,7 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
         unknown_var_symbol_table.get_variable_list(variable_list);
         for (auto & v : variable_list)
         {
-    variables[v.first] = v.second;
+          variables[v.first] = v.second;
         }
       }
       else
@@ -210,6 +213,7 @@ int main(int argc, char **argv)
 
   win->begin();
 
+  auto group = new Fl_Group(0, 0, 1200, 800, "Complex Resizing");
   // create the buttons
 
   resultBuffer = new Fl_Text_Buffer();
@@ -234,6 +238,8 @@ int main(int argc, char **argv)
 
   editBuffer->add_modify_callback(editCallback, 0);
 
+  group->resizable(edit);
+  win->resizable(group);
   win->end();
 
   //win->size_range(win->w(), 600);
