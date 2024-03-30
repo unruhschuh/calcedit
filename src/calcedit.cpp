@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <regex>
 
 //#include <fmt/chrono.h>
 //#include <fmt/format.h>
@@ -50,6 +51,18 @@ Fl_Tree * tree;
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
+
+std::vector<std::string> split(const std::string str, const std::string regex_str)
+{
+    std::regex regexz(regex_str);
+    std::vector<std::string> list(std::sregex_token_iterator(str.begin(), str.end(), regexz, -1),
+                                  std::sregex_token_iterator());
+
+
+    if (str.size() && str.back() == '\n')
+      list.push_back("");
+    return list;
+}
 
 std::vector<std::string> split_string_by_newline(const std::string& str)
 {
@@ -106,49 +119,50 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
   tree->clear();
   tree->begin();
   std::cout << "Callback\n";
-  auto lines = split_string_by_newline(editBuffer->text());
+  //auto lines = split_string_by_newline(editBuffer->text());
+  auto lines = split(editBuffer->text(), "\n");
+  std::cout << "# lines = " << lines.size() << std::endl;
   std::string resultString;
   std::map<std::string, double> variables;
   variables["pi"]= 3.14159265358979323846;
-  size_t line_number = 1;
-  for (auto & line : lines)
+  for (size_t i = 0; i < lines.size(); i++)
   {
-    if (emptyString(line))
+    const std::string &line = lines[i];
+    if (!emptyString(line))
     {
-      resultString += "\n";
-      continue;
-    }
-    symbol_table_t unknown_var_symbol_table;
-    symbol_table_t symbol_table;
-    symbol_table.add_variable("ans", variables["ans"]);
-    symbol_table.add_variable("pi", variables["pi"], true);
-    for (auto & v : variables)
-    {
-      symbol_table.add_variable(v.first, v.second);
-      std::cout << v.first << " = " << v.second << std::endl;
-    }
-    expression_t expression;
-    expression.register_symbol_table(unknown_var_symbol_table);
-    expression.register_symbol_table(symbol_table);
-    my_usr<double> musr(variables);
-    parser_t parser;
-    parser.enable_unknown_symbol_resolver(&musr);
-    if (parser.compile(line, expression))
-    {
-      variables["ans"] = expression.value();
-      resultString += std::to_string(variables["ans"]) + "\n";
-      std::vector<std::pair<std::string,double>> variable_list;
-      unknown_var_symbol_table.get_variable_list(variable_list);
-      for (auto & v : variable_list)
+      symbol_table_t unknown_var_symbol_table;
+      symbol_table_t symbol_table;
+      symbol_table.add_variable("ans", variables["ans"]);
+      symbol_table.add_variable("pi", variables["pi"], true);
+      for (auto & v : variables)
       {
-        variables[v.first] = v.second;
+        symbol_table.add_variable(v.first, v.second);
+        std::cout << v.first << " = " << v.second << std::endl;
+      }
+      expression_t expression;
+      expression.register_symbol_table(unknown_var_symbol_table);
+      expression.register_symbol_table(symbol_table);
+      my_usr<double> musr(variables);
+      parser_t parser;
+      parser.enable_unknown_symbol_resolver(&musr);
+      if (parser.compile(line, expression))
+      {
+        variables["ans"] = expression.value();
+        resultString += std::to_string(variables["ans"]);
+        std::vector<std::pair<std::string,double>> variable_list;
+        unknown_var_symbol_table.get_variable_list(variable_list);
+        for (auto & v : variable_list)
+        {
+    variables[v.first] = v.second;
+        }
+      }
+      else
+      {
+        resultString += parser.error();
       }
     }
-    else
-    {
-      resultString += parser.error() + "\n";
-    }
-    line_number++;
+    if (i != lines.size()-1)
+      resultString += "\n";
   }
   for (auto &v : variables)
   {
