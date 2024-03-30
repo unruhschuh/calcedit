@@ -20,11 +20,15 @@
 
 #include "exprtk.hpp"
 
+void syncVScroll(void * me);
+
 class TextEdit : public Fl_Text_Editor
 {
   public:
     TextEdit(int X, int Y, int W, int H, const char* l = 0) : Fl_Text_Editor(X, Y, W, H, l)
-    {}
+    {
+      mVScrollBar->callback((Fl_Callback*)v_scrollbar_cb_custom, this);
+    }
 
     ~TextEdit()
     {
@@ -39,13 +43,21 @@ class TextEdit : public Fl_Text_Editor
     {
       return  mHorizOffset;
     }
+
+    static void 	v_scrollbar_cb_custom (Fl_Scrollbar *w, Fl_Text_Display *d)
+    {
+      v_scrollbar_cb(w, d);
+      syncVScroll(d);
+    }
 };
 
 class TextDisplay : public Fl_Text_Display
 {
   public:
     TextDisplay(int X, int Y, int W, int H, const char* l = 0) : Fl_Text_Display(X, Y, W, H, l)
-    {}
+    {
+      mVScrollBar->callback((Fl_Callback*)v_scrollbar_cb_custom, this);
+    }
 
     int topLineNum()
     {
@@ -55,6 +67,12 @@ class TextDisplay : public Fl_Text_Display
     int horizOffset()
     {
       return  mHorizOffset;
+    }
+
+    static void 	v_scrollbar_cb_custom (Fl_Scrollbar *w, Fl_Text_Display *d)
+    {
+      v_scrollbar_cb(w, d);
+      syncVScroll(d);
     }
 };
 
@@ -67,6 +85,18 @@ Fl_Tree * tree;
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
+
+void syncVScroll(void * me)
+{
+  if (me == edit)
+  {
+    result->scroll(edit->topLineNum(), result->horizOffset());
+  }
+  else
+  {
+    edit->scroll(result->topLineNum(), edit->horizOffset());
+  }
+}
 
 std::vector<std::string> split(const std::string str, const std::string regex_str)
 {
@@ -191,28 +221,18 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
   tree->end();
   tree->damage(FL_DAMAGE_ALL);
   //resultBuffer->text(editBuffer->text());
-}
-
-void scrollCallback(Fl_Widget * w)
-{
-  std::cout << __FUNCTION__ << "\n";
-}
-
-void watcher(void*)
-{
-  result->scroll(edit->topLineNum(), result->horizOffset());
-  Fl::repeat_timeout(0.01, watcher, nullptr);
+  syncVScroll(edit);
 }
 
 int main(int argc, char **argv)
 {
-  Fl::repeat_timeout(0.01, watcher, nullptr);
   Fl::scheme("gtk+");
   int pad = 10;
   Fl_Window *win = new Fl_Window(1200, 800, "Calcedit");
   win->resizable(win);
 
   auto tile = new Fl_Tile(0, 0, 1200, 800);
+  tile->init_size_range(100, 50);
 
   auto box = new Fl_Box(0, 0, 1200, 800);
   tile->resizable(box);
@@ -223,14 +243,12 @@ int main(int argc, char **argv)
   result->linenumber_width(30);
   result->linenumber_format("%d");
   result->align(FL_ALIGN_RIGHT);
-  result->callback(scrollCallback);
 
   editBuffer = new Fl_Text_Buffer();
   edit = new TextEdit(200, 0, 800, 800);
   edit->buffer(editBuffer);
   edit->linenumber_width(30);
   edit->linenumber_format("%d");
-  edit->callback(scrollCallback);
 
   tree = new Fl_Tree(1000, 0, 200, 800);
   tree->root_label("Variables");
