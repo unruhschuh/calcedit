@@ -1,0 +1,6 @@
+[submodule "deps/fltk"]
+	path = deps/fltk
+	url = https://github.com/fltk/fltk.git
+[submodule "deps/exprtk"]
+	path = deps/exprtk
+	url = https://github.com/ArashPartow/exprtk.git
