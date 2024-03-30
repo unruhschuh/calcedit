@@ -70,6 +70,35 @@ bool emptyString(const std::string & s)
   return true;
 }
 
+template <typename T>
+struct my_usr final : public parser_t::unknown_symbol_resolver
+{
+typedef typename parser_t::unknown_symbol_resolver usr_t;
+
+    my_usr(std::map<std::string, T> & variables) : mVariables{variables}
+    {}
+
+bool process(const std::string& unknown_symbol,
+             typename usr_t::usr_symbol_type& st,
+             T& default_value,
+             std::string& error_message) override
+{
+  //if (0 != unknown_symbol.find("var_"))
+  //{
+  //  error_message = "Invalid symbol: " + unknown_symbol;
+  //  return false;
+  //}
+
+  st = usr_t::e_usr_variable_type;
+  default_value = T(0);
+  //mVariables[unknown_symbol] = default_value;
+  std::cout << "adding variable " << unknown_symbol << std::endl;
+
+  return true;
+}
+std::map<std::string, T> & mVariables;
+};
+
 void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const char* deletedText, void* cbArg)
 {
   std::cout << "Callback\n";
@@ -85,24 +114,31 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
       resultString += "\n";
       continue;
     }
+    symbol_table_t unknown_var_symbol_table;
     symbol_table_t symbol_table;
-    symbol_table.add_variable("ans",ans);
-    symbol_table.add_variable("pi",pi);
-    for (char c = 'a' ; c <= 'z'; c++)
+    symbol_table.add_variable("ans", ans);
+    symbol_table.add_variable("pi", pi, true);
+    for (auto & v : variables)
     {
-      symbol_table.add_variable(std::string()+c,variables[std::string()+c]);
-    }
-    for (char c = 'A' ; c <= 'Z'; c++)
-    {
-      symbol_table.add_variable(std::string()+c,variables[std::string()+c]);
+      symbol_table.add_variable(v.first, v.second);
+      std::cout << v.first << " = " << v.second << std::endl;
     }
     expression_t expression;
+    expression.register_symbol_table(unknown_var_symbol_table);
     expression.register_symbol_table(symbol_table);
+    my_usr<double> musr(variables);
     parser_t parser;
+    parser.enable_unknown_symbol_resolver(&musr);
     if (parser.compile(line, expression))
     {
       ans = expression.value();
       resultString += std::to_string(ans) + "\n";
+      std::vector<std::pair<std::string,double>> variable_list;
+      unknown_var_symbol_table.get_variable_list(variable_list);
+      for (auto & v : variable_list)
+      {
+        variables[v.first] = v.second;
+      }
     }
     else
     {
