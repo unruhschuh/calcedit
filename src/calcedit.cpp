@@ -3,7 +3,7 @@
 #include <regex>
 
 //#include <fmt/chrono.h>
-//#include <fmt/format.h>
+#include <fmt/format.h>
 
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Button.H>
@@ -165,7 +165,7 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
       if (parser.compile(line, expression))
       {
         variables["ans"] = expression.value();
-        resultString += std::to_string(variables["ans"]);
+        resultString += fmt::format("{}", variables["ans"]);
         std::vector<std::pair<std::string,double>> variable_list;
         unknown_var_symbol_table.get_variable_list(variable_list);
         for (auto & v : variable_list)
@@ -184,7 +184,7 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
   for (auto &v : variables)
   {
   //tree->add((v.first + "/" + std::to_string(line_number) + " : " + std::to_string(v.second)).c_str()); //, std::to_string(v.second).c_str());
-  tree->add((v.first + " = " + std::to_string(v.second)).c_str()); //, std::to_string(v.second).c_str());
+  tree->add((v.first + " = " + fmt::format("{}", v.second)).c_str()); //, std::to_string(v.second).c_str());
   }
   resultBuffer->text(resultString.c_str());
   tree->root_label("Variables");

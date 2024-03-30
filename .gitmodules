@@ -4,3 +4,6 @@
 [submodule "deps/exprtk"]
 	path = deps/exprtk
 	url = https://github.com/ArashPartow/exprtk.git
+[submodule "deps/fmt"]
+	path = deps/fmt
+	url = https://github.com/fmtlib/fmt.git

@@ -8,6 +8,7 @@ set(FLTK_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
 set(FLTK_BUILD_FLUID OFF CACHE INTERNAL "" FORCE)
 
 add_subdirectory(deps/fltk)
+add_subdirectory(deps/fmt)
 
 project(calcedit)
 
@@ -31,5 +32,5 @@ endif (APPLE)
 
 set_property(TARGET calcedit PROPERTY CXX_STANDARD 17)
 target_include_directories(calcedit PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/deps/exprtk")
-target_link_libraries(calcedit fltk)
+target_link_libraries(calcedit fltk fmt)
 
