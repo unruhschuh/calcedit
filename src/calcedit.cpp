@@ -146,7 +146,7 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
     }
     else
     {
-      resultString += "!\n";
+      resultString += parser.error() + "\n";
     }
     line_number++;
   }
