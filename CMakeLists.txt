@@ -14,6 +14,9 @@ project(calcedit)
 
 set(SRC
   src/calcedit.cpp
+  src/os-themes.cpp
+  src/os-themes.h
+  src/utils.h
   )
 
 if (APPLE AND (NOT OPTION_APPLE_X11))
@@ -31,6 +34,6 @@ if (APPLE)
 endif (APPLE)
 
 set_property(TARGET calcedit PROPERTY CXX_STANDARD 17)
-target_include_directories(calcedit PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/deps/exprtk")
+target_include_directories(calcedit PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/deps/exprtk")
 target_link_libraries(calcedit fltk fmt)
 

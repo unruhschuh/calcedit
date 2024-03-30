@@ -19,6 +19,7 @@
 #include <FL/Fl_Tile.H>
 
 #include "exprtk.hpp"
+#include "os-themes.h"
 
 void syncVScroll(void * me);
 
@@ -152,8 +153,6 @@ bool process(const std::string& unknown_symbol,
 
   st = usr_t::e_usr_variable_type;
   default_value = T(0);
-  //mVariables[unknown_symbol] = default_value;
-  std::cout << "adding variable " << unknown_symbol << std::endl;
 
   return true;
 }
@@ -164,11 +163,9 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
 {
   tree->clear();
   tree->begin();
-  std::cout << "Callback\n";
   auto lines = split(editBuffer->text(), "\n");
   //std::vector<std::string> lines;
   //lines.push_back(editBuffer->text());
-  std::cout << "# lines = " << lines.size() << std::endl;
   std::string resultString;
   std::map<std::string, double> variables;
   variables["pi"]= 3.14159265358979323846;
@@ -184,7 +181,6 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
       for (auto & v : variables)
       {
         symbol_table.add_variable(v.first, v.second);
-        std::cout << v.first << " = " << v.second << std::endl;
       }
       expression_t expression;
       expression.register_symbol_table(unknown_var_symbol_table);
@@ -224,12 +220,20 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
   syncVScroll(edit);
 }
 
+void window_callback(Fl_Widget*, void*) {
+  if (Fl::event()==FL_SHORTCUT && Fl::event_key()==FL_Escape)
+    return; // ignore Escape
+  exit(0);
+}
+
 int main(int argc, char **argv)
 {
-  Fl::scheme("gtk+");
+  //Fl::scheme("gtk+");
+  OS::use_native_scheme();
   int pad = 10;
   Fl_Window *win = new Fl_Window(1200, 800, "Calcedit");
   win->resizable(win);
+  win->callback(window_callback);
 
   auto tile = new Fl_Tile(0, 0, 1200, 800);
   tile->init_size_range(100, 50);
@@ -240,14 +244,14 @@ int main(int argc, char **argv)
   resultBuffer = new Fl_Text_Buffer();
   result = new TextDisplay(0, 0, 200, 800);
   result->buffer(resultBuffer);
-  result->linenumber_width(30);
+  result->linenumber_width(40);
   result->linenumber_format("%d");
   result->align(FL_ALIGN_RIGHT);
 
   editBuffer = new Fl_Text_Buffer();
   edit = new TextEdit(200, 0, 800, 800);
   edit->buffer(editBuffer);
-  edit->linenumber_width(30);
+  edit->linenumber_width(40);
   edit->linenumber_format("%d");
 
   tree = new Fl_Tree(1000, 0, 200, 800);
