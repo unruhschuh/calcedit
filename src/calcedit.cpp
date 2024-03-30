@@ -13,6 +13,7 @@
 #include <FL/Fl_Input.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Text_Editor.H>
+#include <FL/Fl_Tree.H>
 
 #include "exprtk.hpp"
 
@@ -44,6 +45,7 @@ TextEdit * edit;
 Fl_Text_Buffer * editBuffer;
 TextDisplay * result;
 Fl_Text_Buffer * resultBuffer;
+Fl_Tree * tree;
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
@@ -101,12 +103,14 @@ std::map<std::string, T> & mVariables;
 
 void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const char* deletedText, void* cbArg)
 {
+  tree->clear();
+  tree->begin();
   std::cout << "Callback\n";
   auto lines = split_string_by_newline(editBuffer->text());
   std::string resultString;
-  double ans = 0;
   std::map<std::string, double> variables;
-  double pi = 3.14159265358979323846;
+  variables["pi"]= 3.14159265358979323846;
+  size_t line_number = 1;
   for (auto & line : lines)
   {
     if (emptyString(line))
@@ -116,8 +120,8 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
     }
     symbol_table_t unknown_var_symbol_table;
     symbol_table_t symbol_table;
-    symbol_table.add_variable("ans", ans);
-    symbol_table.add_variable("pi", pi, true);
+    symbol_table.add_variable("ans", variables["ans"]);
+    symbol_table.add_variable("pi", variables["pi"], true);
     for (auto & v : variables)
     {
       symbol_table.add_variable(v.first, v.second);
@@ -131,8 +135,8 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
     parser.enable_unknown_symbol_resolver(&musr);
     if (parser.compile(line, expression))
     {
-      ans = expression.value();
-      resultString += std::to_string(ans) + "\n";
+      variables["ans"] = expression.value();
+      resultString += std::to_string(variables["ans"]) + "\n";
       std::vector<std::pair<std::string,double>> variable_list;
       unknown_var_symbol_table.get_variable_list(variable_list);
       for (auto & v : variable_list)
@@ -144,8 +148,17 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
     {
       resultString += "!\n";
     }
+    line_number++;
+  }
+  for (auto &v : variables)
+  {
+  //tree->add((v.first + "/" + std::to_string(line_number) + " : " + std::to_string(v.second)).c_str()); //, std::to_string(v.second).c_str());
+  tree->add((v.first + " = " + std::to_string(v.second)).c_str()); //, std::to_string(v.second).c_str());
   }
   resultBuffer->text(resultString.c_str());
+  tree->root_label("Variables");
+  tree->end();
+  tree->damage(FL_DAMAGE_ALL);
   //resultBuffer->text(editBuffer->text());
 }
 
@@ -174,17 +187,22 @@ int main(int argc, char **argv)
   resultBuffer = new Fl_Text_Buffer();
   result = new TextDisplay(10, 10, 200, 780);
   result->buffer(resultBuffer);
-  //result->linenumber_width(50);
+  result->linenumber_width(30);
   result->linenumber_format("%d");
   result->align(FL_ALIGN_RIGHT);
   result->callback(scrollCallback);
 
   editBuffer = new Fl_Text_Buffer();
-  edit = new TextEdit(220, 10, 1200-230, 780);
+  edit = new TextEdit(220, 10, 1200-430, 780);
   edit->buffer(editBuffer);
-  //edit->linenumber_width(50);
+  edit->linenumber_width(30);
   edit->linenumber_format("%d");
   edit->callback(scrollCallback);
+
+  tree = new Fl_Tree(220+1200-430+10, 10, 190, 780);
+  tree->begin();
+  tree->root_label("Variables");
+  tree->end();
 
   editBuffer->add_modify_callback(editCallback, 0);
 
