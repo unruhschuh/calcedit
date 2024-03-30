@@ -32,6 +32,11 @@ class TextEdit : public Fl_Text_Editor
     {
       return mTopLineNum;
     }
+
+    int horizOffset()
+    {
+      return  mHorizOffset;
+    }
 };
 
 class TextDisplay : public Fl_Text_Display
@@ -40,6 +45,15 @@ class TextDisplay : public Fl_Text_Display
     TextDisplay(int X, int Y, int W, int H, const char* l = 0) : Fl_Text_Display(X, Y, W, H, l)
     {}
 
+    int topLineNum()
+    {
+      return mTopLineNum;
+    }
+
+    int horizOffset()
+    {
+      return  mHorizOffset;
+    }
 };
 
 TextEdit * edit;
@@ -183,7 +197,7 @@ void scrollCallback(Fl_Widget * w)
 
 void watcher(void*)
 {
-  result->scroll(edit->topLineNum(), 0);
+  result->scroll(edit->topLineNum(), result->horizOffset());
   Fl::repeat_timeout(0.01, watcher, nullptr);
 }
 
