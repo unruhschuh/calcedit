@@ -158,13 +158,11 @@ bool process(const std::string& unknown_symbol,
 std::map<std::string, T> & mVariables;
 };
 
-void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const char* deletedText, void* cbArg)
+void calculate(const std::string & input, std::map<std::string, double> & variables, std::string & resultString)
 {
-  tree->clear();
-  tree->begin();
-  auto lines = split(editBuffer->text(), "\n");
-  std::string resultString;
-  std::map<std::string, double> variables;
+  resultString.clear();
+  variables.clear();
+  auto lines = split(input, "\n");
   variables["pi"]= 3.14159265358979323846;
   for (size_t i = 0; i < lines.size(); i++)
   {
@@ -204,17 +202,30 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
     if (i != lines.size()-1)
       resultString += "\n";
   }
+
+}
+
+void update()
+{
+  tree->clear();
+  tree->begin();
+  std::string resultString;
+  std::map<std::string, double> variables;
+  calculate(editBuffer->text(), variables, resultString);
+  resultBuffer->text(resultString.c_str());
   for (auto &v : variables)
   {
-  //tree->add((v.first + "/" + std::to_string(line_number) + " : " + std::to_string(v.second)).c_str()); //, std::to_string(v.second).c_str());
-  tree->add((v.first + " = " + fmt::format("{}", v.second)).c_str()); //, std::to_string(v.second).c_str());
+    tree->add((v.first + " = " + fmt::format("{}", v.second)).c_str()); //, std::to_string(v.second).c_str());
   }
-  resultBuffer->text(resultString.c_str());
   tree->root_label("Variables");
   tree->end();
   tree->damage(FL_DAMAGE_ALL);
-  //resultBuffer->text(editBuffer->text());
   syncVScroll(edit);
+}
+
+void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const char* deletedText, void* cbArg)
+{
+  update();
 }
 
 void window_callback(Fl_Widget*, void*) {
@@ -261,6 +272,8 @@ int main(int argc, char **argv)
 
   //win->size_range(win->w(), 600);
   win->show(argc, argv);
+
+  update();
 
   // return Fl::run();
   int ret = Fl::run();
