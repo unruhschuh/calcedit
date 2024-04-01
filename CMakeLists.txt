@@ -14,9 +14,6 @@ project(calcedit)
 
 set(SRC
   src/calcedit.cpp
-  src/os-themes.cpp
-  src/os-themes.h
-  src/utils.h
   )
 
 if (APPLE AND (NOT OPTION_APPLE_X11))

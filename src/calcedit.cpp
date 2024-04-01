@@ -19,7 +19,6 @@
 #include <FL/Fl_Tile.H>
 
 #include "exprtk.hpp"
-#include "os-themes.h"
 
 void syncVScroll(void * me);
 
@@ -164,8 +163,6 @@ void editCallback(int pos, int nInserted, int nDeleted, int nRestyled, const cha
   tree->clear();
   tree->begin();
   auto lines = split(editBuffer->text(), "\n");
-  //std::vector<std::string> lines;
-  //lines.push_back(editBuffer->text());
   std::string resultString;
   std::map<std::string, double> variables;
   variables["pi"]= 3.14159265358979323846;
@@ -228,8 +225,7 @@ void window_callback(Fl_Widget*, void*) {
 
 int main(int argc, char **argv)
 {
-  //Fl::scheme("gtk+");
-  OS::use_native_scheme();
+  Fl::scheme("gtk+");
   int pad = 10;
   Fl_Window *win = new Fl_Window(1200, 800, "Calcedit");
   win->resizable(win);
