@@ -123,7 +123,6 @@ std::vector<std::string> split_string_by_newline(const std::string& str)
 
 bool emptyString(const std::string & s)
 {
-  if (s.size() && s[0] == '#') return true;
   for (auto c : s)
   {
     if (!(c == ' ' || c == '\t')) return false;
@@ -158,16 +157,39 @@ bool process(const std::string& unknown_symbol,
 std::map<std::string, T> & mVariables;
 };
 
-void calculate(const std::string & input, std::map<std::string, double> & variables, std::string & resultString)
+void calculate(
+    const std::string & input,
+    std::map<std::string, double> & variables,
+    std::string & resultString
+    )
 {
   resultString.clear();
   variables.clear();
-  auto lines = split(input, "\n");
   variables["pi"]= 3.14159265358979323846;
+  auto lines = split(input, "\n");
+  std::string parser_input;
+  bool block = false;
   for (size_t i = 0; i < lines.size(); i++)
   {
     const std::string &line = lines[i];
-    if (!emptyString(line))
+    if (line == "#block")
+    {
+      block = true;
+    }
+    else if (line == "#end")
+    {
+      block = false;
+    }
+    else
+    {
+      if (i + 1 == lines.size())
+      {
+        // close last block even if it doesn't end in "#end"
+        block = false;
+      }
+      parser_input += line;
+    }
+    if (!emptyString(parser_input) && !block)
     {
       symbol_table_t unknown_var_symbol_table;
       symbol_table_t symbol_table;
@@ -183,7 +205,7 @@ void calculate(const std::string & input, std::map<std::string, double> & variab
       my_usr<double> musr(variables);
       parser_t parser;
       parser.enable_unknown_symbol_resolver(&musr);
-      if (parser.compile(line, expression))
+      if (parser.compile(parser_input, expression))
       {
         variables["ans"] = expression.value();
         resultString += fmt::format("{}", variables["ans"]);
@@ -191,6 +213,7 @@ void calculate(const std::string & input, std::map<std::string, double> & variab
         unknown_var_symbol_table.get_variable_list(variable_list);
         for (auto & v : variable_list)
         {
+          std::cout << "unknown variable: " << v.first << std::endl;
           variables[v.first] = v.second;
         }
       }
@@ -198,9 +221,12 @@ void calculate(const std::string & input, std::map<std::string, double> & variab
       {
         resultString += parser.error();
       }
+      parser_input.clear();
     }
     if (i != lines.size()-1)
+    {
       resultString += "\n";
+    }
   }
 
 }
@@ -215,9 +241,10 @@ void update()
   resultBuffer->text(resultString.c_str());
   for (auto &v : variables)
   {
-    tree->add((v.first + " = " + fmt::format("{}", v.second)).c_str()); //, std::to_string(v.second).c_str());
+    tree->add(("Variables/" + v.first + " = " + fmt::format("{}", v.second)).c_str()); //, std::to_string(v.second).c_str());
   }
-  tree->root_label("Variables");
+  tree->root_label("Data");
+  tree->showroot(0);
   tree->end();
   tree->damage(FL_DAMAGE_ALL);
   syncVScroll(edit);
