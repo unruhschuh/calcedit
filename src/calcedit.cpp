@@ -85,6 +85,7 @@ Fl_Tree * tree;
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
+typedef exprtk::parser<double>::settings_t settings_t;
 
 void syncVScroll(void * me)
 {
@@ -157,6 +158,11 @@ bool process(const std::string& unknown_symbol,
 std::map<std::string, T> & mVariables;
 };
 
+std::string strip_comment(const std::string & line)
+{
+  return std::regex_replace(line, std::regex("^[ \t]*//.*"), "");
+}
+
 void calculate(
     const std::string & input,
     std::map<std::string, double> & variables,
@@ -187,7 +193,7 @@ void calculate(
         // close last block even if it doesn't end in "#end"
         block = false;
       }
-      parser_input += line;
+      parser_input += strip_comment(line);
     }
     if (!emptyString(parser_input) && !block)
     {
@@ -203,6 +209,7 @@ void calculate(
       expression.register_symbol_table(unknown_var_symbol_table);
       expression.register_symbol_table(symbol_table);
       my_usr<double> musr(variables);
+      //parser_t parser(settings_t::compile_all_opts - settings_t::e_commutative_check);
       parser_t parser;
       parser.enable_unknown_symbol_resolver(&musr);
       if (parser.compile(parser_input, expression))
