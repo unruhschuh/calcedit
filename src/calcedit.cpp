@@ -78,8 +78,10 @@ class TextDisplay : public Fl_Text_Display
 
 TextEdit * edit;
 Fl_Text_Buffer * editBuffer;
+Fl_Text_Buffer * editStyleBuffer;
 TextDisplay * result;
 Fl_Text_Buffer * resultBuffer;
+Fl_Text_Buffer * resultStyleBuffer;
 Fl_Tree * tree;
 
 typedef exprtk::symbol_table<double> symbol_table_t;
@@ -254,6 +256,24 @@ void update()
   tree->showroot(0);
   tree->end();
   tree->damage(FL_DAMAGE_ALL);
+  auto style = [](Fl_Text_Buffer * textBuffer, Fl_Text_Buffer * styleBuffer){
+    std::string styleString = textBuffer->text();
+    bool line = true;
+    for (size_t i = 0; i < styleString.length(); i++)
+    {
+      if (styleString[i] != '\n')
+      {
+        styleString[i] = 'A' + line;
+      }
+      else
+      {
+        line = !line;
+      }
+    }
+    styleBuffer->text(styleString.c_str());
+  };
+  style(editBuffer, editStyleBuffer);
+  style(resultBuffer, resultStyleBuffer);
   syncVScroll(edit);
 }
 
@@ -295,6 +315,18 @@ int main(int argc, char **argv)
   edit->linenumber_width(40);
   edit->linenumber_format("%d");
 
+  editStyleBuffer = new Fl_Text_Buffer();
+  resultStyleBuffer = new Fl_Text_Buffer();
+  Fl_Text_Display::Style_Table_Entry stable[] = {
+    // FONT COLOR      FONT FACE   FONT SIZE
+    // --------------- ----------- --------------
+    {  FL_BLACK,       FL_COURIER, 12, Fl_Text_Display::ATTR_BGCOLOR_EXT, FL_GRAY }, // A - Red
+    {  FL_BLACK,       FL_COURIER, 12, Fl_Text_Display::ATTR_BGCOLOR_EXT, FL_DARK2 }, // B - Green
+  };
+  stable[0].bgcolor;
+  edit->highlight_data(editStyleBuffer, stable, sizeof(stable)/sizeof(stable[0]), 'A', 0, 0);
+  result->highlight_data(resultStyleBuffer, stable, sizeof(stable)/sizeof(stable[0]), 'A', 0, 0);
+
   tree = new Fl_Tree(1000, 0, 200, 800);
   tree->root_label("Variables");
 
@@ -306,6 +338,31 @@ int main(int argc, char **argv)
 
   //win->size_range(win->w(), 600);
   win->show(argc, argv);
+
+  editBuffer->text(
+    "// Comments start with double slash\n"
+    "// Each non-empty line is an expression which is evaluated and the result\n"
+    "// is displayed on the left pane in the same line.\n"
+    "\n"
+    "1 + 1\n"
+    "\n"
+    "// The latest result is stored in the variable \"ans\"\n"
+    "\n"
+    "ans + 1\n"
+    "\n"
+    "// Custom variables can be created simply by using them. They are initialized with zero\n"
+    "\n"
+    "1 + x\n"
+    "\n"
+    "// A value can be assigned explicitly by using the assignment operator \":=\"\n"
+    "\n"
+    "y: = 8\n"
+    "\n"
+    "// All variables are displayed in a tree view on the right.\n"
+    "// There is one predefined constant \"pi\"\n"
+    "\n"
+    "cos(pi)\n"
+  );
 
   update();
 

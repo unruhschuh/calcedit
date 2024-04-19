@@ -22,6 +22,10 @@ else ()
   add_executable(calcedit WIN32 ${SRC})
 endif()
 
+if (MSVC)
+  target_compile_options(calcedit PRIVATE /bigobj)
+endif()
+
 if(WIN32)
   target_link_libraries(calcedit gdiplus)
 endif()
