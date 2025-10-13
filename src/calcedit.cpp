@@ -18,6 +18,7 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Tile.H>
 
+#define exprtk_disable_caseinsensitivity
 #include "exprtk.hpp"
 
 void syncVScroll(void * me);
@@ -153,7 +154,7 @@ bool process(const std::string& unknown_symbol,
   //}
 
   st = usr_t::e_usr_variable_type;
-  default_value = T(0);
+  default_value = T(std::numeric_limits<double>::quiet_NaN());
 
   return true;
 }
@@ -350,7 +351,8 @@ int main(int argc, char **argv)
     "\n"
     "ans + 1\n"
     "\n"
-    "// Custom variables can be created simply by using them. They are initialized with zero\n"
+    "// Custom variables can be created simply by using them. They are initialized with \"nan\"\n"
+    "// to avoid surprising results by misspelling a variable name."
     "\n"
     "1 + x\n"
     "\n"
