@@ -66,7 +66,7 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
 
 #endif
   {
-    qDebug() << "updateEvent";
+    //qDebug() << "updateEvent";
     QTextBlock block = firstVisibleBlock();
     int blockNumber = block.blockNumber();
     int top = qRound(blockBoundingGeometry(block).translated(contentOffset()).top());
@@ -82,7 +82,7 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
         {
           result = " = " + m_results[blockNumber];
         }
-        qDebug() << result;
+        //qDebug() << result;
         painter.drawText(x, top, line.width(), fontMetrics().height(),
              Qt::AlignLeft, result.c_str());
       }

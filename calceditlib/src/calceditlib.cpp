@@ -92,29 +92,18 @@ void calculate(
   variables["pi"]= 3.14159265358979323846;
   auto lines = split(input, "\n");
   std::string parser_input;
-  bool block = false;
+  bool block = true;
   for (size_t i = 0; i < lines.size(); i++)
   {
     const std::string &line = lines[i];
-    if (line == "#block")
-    {
-      block = true;
-    }
-    else if (line == "#end")
+    parser_input += strip_comment(line);
+    if (i + 1 >= lines.size() || emptyString(lines[i+1]))
     {
       block = false;
     }
-    else
-    {
-      if (i + 1 == lines.size())
-      {
-        // close last block even if it doesn't end in "#end"
-        block = false;
-      }
-      parser_input += strip_comment(line);
-    }
     if (!emptyString(parser_input) && !block)
     {
+      block = true;
       symbol_table_t unknown_var_symbol_table;
       symbol_table_t symbol_table;
       symbol_table.add_variable("ans", variables["ans"]);
@@ -131,6 +120,7 @@ void calculate(
       //parser_t parser(settings_t::compile_all_opts - settings_t::e_commutative_check);
       parser_t parser;
       parser.enable_unknown_symbol_resolver(&musr);
+      parser.settings().disable_commutative_check();
       if (parser.compile(parser_input, expression))
       {
         variables["ans"] = expression.value();
@@ -142,6 +132,8 @@ void calculate(
           std::cout << "unknown variable: " << v.first << std::endl;
           variables[v.first] = v.second;
         }
+        // TODO: exprtk::details::base_function_list
+        // TODO: unknown_var_symbol_table.get_vector_list()
       }
       else
       {
