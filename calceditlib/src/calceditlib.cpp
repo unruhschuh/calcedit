@@ -54,6 +54,7 @@ std::vector<std::string> split_string_by_newline(const std::string& str)
   return result;
 }
 
+#if 0
 template <typename T>
 struct my_usr final : public parser_t::unknown_symbol_resolver
 {
@@ -80,14 +81,73 @@ bool process(const std::string& unknown_symbol,
 }
 std::map<std::string, T> & mVariables;
 };
+#else
+template <typename T>
+struct my_usr final : public parser_t::unknown_symbol_resolver
+{
+    typedef typename parser_t::unknown_symbol_resolver usr_t;
+
+    my_usr(std::map<std::string, T> & variables, std::map<std::string, std::vector<T>> & vectors)
+      : mVariables{variables}, mVectors{vectors}, usr_t(usr_t::e_usrmode_extended)
+    {}
+
+    bool process(const std::string& unknown_symbol,
+                 symbol_table_t&    symbol_table,
+                 std::string&       error_message) override
+    {
+      bool result = false;
+
+      if (1) // (std::islower(unknown_symbol[0]))
+      {
+        // Default value of zero
+        result = symbol_table.create_variable(unknown_symbol,T(std::numeric_limits<double>::quiet_NaN()));
+
+        if (!result)
+        {
+          error_message = "Failed to create variable...";
+        }
+      }
+      else if (std::isupper(unknown_symbol[0]))
+      {
+        auto pos = unknown_symbol.find_last_of('_');
+        if (pos == std::string::npos || pos+1 == unknown_symbol.length() || !std::isdigit(unknown_symbol[pos+1]))
+        {
+          result = false;
+        }
+        else
+        {
+          size_t vector_size = std::stoul(unknown_symbol.substr(pos+1));
+          auto vector_name = unknown_symbol.substr(0, pos);
+          mVectors[vector_name] = std::vector<T>(vector_size, T(std::numeric_limits<double>::quiet_NaN()));
+          result = symbol_table.add_vector(unknown_symbol, mVectors[vector_name]);
+          // Default value of empty string
+          //result = symbol_table.create_stringvar(unknown_symbol,"");
+        }
+
+        if (!result)
+        {
+          error_message = "Failed to create vector variable...";
+        }
+      }
+      else
+        error_message = "Indeterminable symbol type.";
+
+      return result;
+    }
+  std::map<std::string, T> & mVariables;
+  std::map<std::string, std::vector<T>> & mVectors;
+};
+#endif
 
 void calculate(
     const std::string & input,
     std::map<std::string, double> & variables,
+    std::map<std::string, std::vector<double>> & vectors,
     std::string & resultString
     )
 {
   resultString.clear();
+  vectors.clear();
   variables.clear();
   variables["pi"]= 3.14159265358979323846;
   auto lines = split(input, "\n");
@@ -101,6 +161,10 @@ void calculate(
     {
       block = false;
     }
+    else
+    {
+      block = true;
+    }
     if (!emptyString(parser_input) && !block)
     {
       block = true;
@@ -113,10 +177,14 @@ void calculate(
       {
         symbol_table.add_variable(v.first, v.second);
       }
+      for (auto & v : vectors)
+      {
+        symbol_table.add_vector(v.first, v.second);
+      }
       expression_t expression;
       expression.register_symbol_table(unknown_var_symbol_table);
       expression.register_symbol_table(symbol_table);
-      my_usr<double> musr(variables);
+      my_usr<double> musr(variables, vectors);
       //parser_t parser(settings_t::compile_all_opts - settings_t::e_commutative_check);
       parser_t parser;
       parser.enable_unknown_symbol_resolver(&musr);
@@ -133,7 +201,17 @@ void calculate(
           variables[v.first] = v.second;
         }
         // TODO: exprtk::details::base_function_list
-        // TODO: unknown_var_symbol_table.get_vector_list()
+        std::vector<std::string> vector_list;
+        unknown_var_symbol_table.get_vector_list(vector_list);
+        //for (auto & vector_name : vector_list)
+        //{
+        //  auto vector = unknown_var_symbol_table.get_vector(vector_name);
+        //  auto & v = vectors[vector_name];
+        //  for (size_t i = 0; i < vector->size(); i++)
+        //  {
+        //    v.push_back(vector->data()[i]);
+        //  }
+        //}
       }
       else
       {

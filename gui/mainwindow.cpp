@@ -38,6 +38,14 @@ MainWindow::MainWindow(QWidget *parent)
     "// There is one predefined constant \"pi\"\n"
     "\n"
     "cos(pi)\n"
+    "\n"
+    "// For loops\n"
+    "x:=1;\n"
+    "for(i:=0; i< 16; i+=1)\n"
+    "{\n"
+    "  x*=2;\n"
+    "};\n"
+    "x"
         );
 }
 
@@ -51,7 +59,8 @@ void MainWindow::updateCalculation()
   std::string input = ui->input->toPlainText().toStdString();
   std::string results;
   std::map<std::string, double> variables;
-  calculate(input, variables, results);
+  std::map<std::string, std::vector<double>> vectors;
+  calculate(input, variables, vectors, results);
   ui->input->setResults(split_string_by_newline(results));
 
   QList<QTreeWidgetItem *> items;

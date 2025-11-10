@@ -8,6 +8,7 @@
 void calculate(
     const std::string & input,
     std::map<std::string, double> & variables,
+    std::map<std::string, std::vector<double>> & vectors,
     std::string & resultString
     );
 
