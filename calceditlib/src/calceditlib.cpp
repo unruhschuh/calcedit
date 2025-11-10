@@ -156,7 +156,7 @@ void calculate(
   for (size_t i = 0; i < lines.size(); i++)
   {
     const std::string &line = lines[i];
-    parser_input += strip_comment(line);
+    parser_input += line + "\n"; // strip_comment(line) + " ";
     if (i + 1 >= lines.size() || emptyString(lines[i+1]))
     {
       block = false;
@@ -213,7 +213,7 @@ void calculate(
         //  }
         //}
       }
-      else
+      else if ( ! parser.lexer().empty() )
       {
         resultString += parser.error();
         variables["ans"] = std::numeric_limits<double>::quiet_NaN();
