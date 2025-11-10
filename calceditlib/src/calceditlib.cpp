@@ -152,22 +152,22 @@ void calculate(
   variables["pi"]= 3.14159265358979323846;
   auto lines = split(input, "\n");
   std::string parser_input;
-  bool block = true;
+  bool block = false;
   for (size_t i = 0; i < lines.size(); i++)
   {
     const std::string &line = lines[i];
     parser_input += line + "\n"; // strip_comment(line) + " ";
+    if ( (line.length() >= 2 && line.substr(0,2) == "##" ) ||
+         (line.length() >= 3 && line.substr(0,3) == "///")    )
+    {
+      block = true;
+    }
     if (i + 1 >= lines.size() || emptyString(lines[i+1]))
     {
       block = false;
     }
-    else
-    {
-      block = true;
-    }
     if (!emptyString(parser_input) && !block)
     {
-      block = true;
       symbol_table_t unknown_var_symbol_table;
       symbol_table_t symbol_table;
       symbol_table.add_variable("ans", variables["ans"]);
@@ -197,7 +197,6 @@ void calculate(
         unknown_var_symbol_table.get_variable_list(variable_list);
         for (auto & v : variable_list)
         {
-          std::cout << "unknown variable: " << v.first << std::endl;
           variables[v.first] = v.second;
         }
         // TODO: exprtk::details::base_function_list

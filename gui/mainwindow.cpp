@@ -40,12 +40,14 @@ MainWindow::MainWindow(QWidget *parent)
     "cos(pi)\n"
     "\n"
     "// For loops\n"
+    "x:=1; for(i:=0; i< 16; i+=1) { x*=2; };\n"
+    "\n"
+    "/// Multi-line expressions start with either '///' or '##'\n"
     "x:=1;\n"
     "for(i:=0; i< 16; i+=1)\n"
     "{\n"
     "  x*=2;\n"
-    "};\n"
-    "x"
+    "}; \n"
         );
 }
 
