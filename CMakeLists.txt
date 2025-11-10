@@ -10,6 +10,7 @@ set(FLTK_BUILD_FLUID OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(deps/fltk)
 add_subdirectory(deps/fmt)
 add_subdirectory(calceditlib)
+add_subdirectory(gui)
 
 project(calcedit)
 

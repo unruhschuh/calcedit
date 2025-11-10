@@ -15,7 +15,6 @@ typedef exprtk::parser<double>::settings_t settings_t;
 
 static bool emptyString(const std::string & s);
 static std::vector<std::string> split(const std::string str, const std::string regex_str);
-static std::vector<std::string> split_string_by_newline(const std::string& str);
 static std::string strip_comment(const std::string & line);
 
 static bool emptyString(const std::string & s)
@@ -44,7 +43,7 @@ static std::vector<std::string> split(const std::string str, const std::string r
     return list;
 }
 
-static std::vector<std::string> split_string_by_newline(const std::string& str)
+std::vector<std::string> split_string_by_newline(const std::string& str)
 {
   auto result = std::vector<std::string>{};
   auto ss = std::stringstream{str};
@@ -120,6 +119,7 @@ void calculate(
       symbol_table_t symbol_table;
       symbol_table.add_variable("ans", variables["ans"]);
       symbol_table.add_variable("pi", variables["pi"], true);
+      //symbol_table.add_constants();
       for (auto & v : variables)
       {
         symbol_table.add_variable(v.first, v.second);
