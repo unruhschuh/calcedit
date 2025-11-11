@@ -13,6 +13,7 @@ class CalcEditEdit : public QPlainTextEdit
     void setResults(std::vector<std::string> results);
   protected:
     virtual void paintEvent(QPaintEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent *event) override;
 
   private:
     std::vector<std::string> m_results;

@@ -3,6 +3,8 @@
 #include <QPainter>
 #include <QPen>
 #include <QTextBlock>
+#include <QClipboard>
+#include <QApplication>
 
 //CalcEditEdit::CalcEditEdit()
 //{
@@ -96,6 +98,24 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
 
 
   QPlainTextEdit::paintEvent(event);
+}
+
+void CalcEditEdit::keyPressEvent(QKeyEvent *event)
+{
+  auto line = textCursor().blockNumber();
+  if(
+     event->type() == QKeyEvent::KeyPress &&
+     event->matches(QKeySequence::Copy) &&
+     this->textCursor().selectedText().isEmpty() &&
+     line <= m_results.size() )
+  {
+    QApplication::clipboard()->setText(m_results[line].c_str());
+    event->accept();
+  }
+  else
+  {
+    QPlainTextEdit::keyPressEvent(event);
+  }
 }
 
 void CalcEditEdit::setResults(std::vector<std::string> results)
