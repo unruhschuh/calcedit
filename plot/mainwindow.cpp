@@ -23,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
   ui->widget->setInteraction(QCP::iRangeDrag, true);
   ui->widget->setInteraction(QCP::iRangeZoom, true);
 
+  ui->widget->installEventFilter(this);
+
   m_recalcTimer.setSingleShot(true);
 
   ui->plainTextEdit->setPlainText(
@@ -104,7 +106,7 @@ void MainWindow::updateCalculation()
 
     auto customPlot = ui->widget;
     customPlot->clearGraphs();
-    for (auto v : variable_list)
+    for (const auto & v : variable_list)
     {
       qDebug() << v;
       double & y = unknown_var_symbol_table.variable_ref(v);
@@ -126,10 +128,6 @@ void MainWindow::updateCalculation()
       graph->setData(X, Y);
       graph->setName(v.c_str());
       graph->setPen(QPen(graphColors[graphIndex % graphColors.size()]));
-      // give the axes some labels:
-      // set axes ranges, so we see all data:
-      //customPlot->xAxis->setRange(-1, 1);
-      //customPlot->yAxis->setRange(0, 1);
     }
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
@@ -151,4 +149,24 @@ void MainWindow::updateCalculation()
     statusBar()->showMessage(error_message);
 
   }
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+  if (event->type() == QEvent::Wheel)
+  {
+    if (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
+    {
+      ui->widget->axisRect()->setRangeZoom(Qt::Horizontal);
+    }
+    else if (QGuiApplication::keyboardModifiers() & Qt::ControlModifier)
+    {
+      ui->widget->axisRect()->setRangeZoom(Qt::Vertical);
+    }
+    else
+    {
+      ui->widget->axisRect()->setRangeZoom(Qt::Vertical | Qt::Horizontal);
+    }
+  }
+  return QObject::eventFilter(obj, event);
 }

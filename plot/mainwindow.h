@@ -19,6 +19,9 @@ class MainWindow : public QMainWindow
   private:
     Ui::MainWindow *ui;
 
+  protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
   public slots:
     void updateCalculation();
     void startCalculationTimer();
