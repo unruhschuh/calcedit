@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
   ui->widget->yAxis->setRange(-3.5, 3.5);
 
   ui->widget->installEventFilter(this);
+  ui->widget->setNoAntialiasingOnDrag(true);
 
   m_recalcTimer.setSingleShot(true);
 
@@ -80,6 +81,7 @@ void MainWindow::startCalculationTimer()
   m_recalcTimer.start(200);
 }
 
+#if 0
 static const std::vector<QColor> graphColors = {
   QColor(Qt::red),
   QColor(Qt::green),
@@ -94,6 +96,18 @@ static const std::vector<QColor> graphColors = {
   QColor(Qt::darkMagenta),
   QColor(Qt::darkYellow)
 };
+#else
+static const std::vector<QColor> graphColors = {
+  QColor("#cc241d"),
+  QColor("#98971a"),
+  QColor("#d79921"),
+  QColor("#458588"),
+  QColor("#b16286"),
+  QColor("#689d6a"),
+  QColor("#7c6f64"),
+  QColor("#d65d0e")
+};
+#endif
 
 void MainWindow::updateCalculation()
 {
@@ -117,6 +131,11 @@ void MainWindow::updateCalculation()
   //bool found = false;
   //auto range = ui->widget->graph()->getValueRange(found);
   auto range = ui->widget->xAxis->range();
+  {
+    auto rangeWidth = range.upper - range.lower;
+    range.lower -= rangeWidth;
+    range.upper += rangeWidth;
+  }
 
   if (parser.compile(parser_input, expression))
   {
@@ -127,10 +146,9 @@ void MainWindow::updateCalculation()
     customPlot->clearGraphs();
     for (const auto & v : variable_list)
     {
-      qDebug() << v;
       double & y = unknown_var_symbol_table.variable_ref(v);
       // generate some data:
-      int N = 1001;
+      int N = std::max(ui->widget->width()*2, 100);
       QVector<double> X(N), Y(N); // initialize with entries 0..100
       for (int i=0; i<N; ++i)
       {
@@ -144,8 +162,11 @@ void MainWindow::updateCalculation()
       customPlot->addGraph();
       auto graphIndex = customPlot->graphCount()-1;
       auto graph = customPlot->graph(graphIndex);
+      graph->setAntialiased(true);
       graph->setData(X, Y);
-      graph->setName(v.c_str());
+      QString name = v.c_str();
+      name.replace('_', ' ');
+      graph->setName(name);
       graph->setPen(QPen(graphColors[graphIndex % graphColors.size()]));
     }
     customPlot->xAxis->setLabel("x");
