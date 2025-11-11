@@ -29,44 +29,29 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
 
   //auto block = firstVisibleBlock();
 
-#if 0
+  bool mlBlock = false;
   for (auto block = document()->begin(); block != document()->end(); block = block.next())
   {
-
-
-    auto r = blockBoundingGeometry(block);
-    QBrush b;
-
-    if (block.blockNumber() % 2)
+    if (block.text().startsWith("///") || block.text().startsWith("##"))
     {
-      b.setColor(QColor(200,200,200));
+      mlBlock = true;
     }
-    else
-    {
-      b.setColor(QColor(150, 150, 150));
-    }
-    b.setStyle(Qt::BrushStyle::SolidPattern);
 
-    painter.fillRect(r, b);
-
+    if (mlBlock)
     {
+      auto r = blockBoundingGeometry(block).translated(contentOffset());
       QBrush b;
-      b.setColor(Qt::white);
-      QPen p;
-      p.setColor(Qt::white);
-      painter.setBrush(b);
-      painter.setPen(p);
-      auto line = block.layout()->lineAt(block.layout()->lineCount()-1);
-      auto y = r.y() + r.height() + block.layout()->position().y() + line.y();
-      auto x = line.naturalTextWidth();
-      auto pos = QPoint(x, y);
-      //pos.setX(line.width());
-      painter.setFont(font());
-      //painter.drawText(pos, "=5");
+      b.setColor(QColor(220,220,220));
+      b.setStyle(Qt::BrushStyle::SolidPattern);
+      painter.fillRect(r, b);
+    }
+
+    if (block.next().text().isEmpty())
+    {
+      mlBlock = false;
     }
   }
 
-#endif
   {
     //qDebug() << "updateEvent";
     QTextBlock block = firstVisibleBlock();
@@ -79,14 +64,11 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
         auto x = line.naturalTextWidth() + 5;
         QString number = QString::number(blockNumber + 1);
         painter.setPen(Qt::darkGray);
-        std::string result;
         if (blockNumber < m_results.size() && ! m_results[blockNumber].empty())
         {
-          result = " = " + m_results[blockNumber];
+          std::string result = " = " + m_results[blockNumber];
+          painter.drawText(x, top, line.width(), fontMetrics().height(), Qt::AlignLeft, result.c_str());
         }
-        //qDebug() << result;
-        painter.drawText(x, top, line.width(), fontMetrics().height(),
-             Qt::AlignLeft, result.c_str());
       }
 
       block = block.next();
@@ -106,7 +88,7 @@ void CalcEditEdit::keyPressEvent(QKeyEvent *event)
   if(
      event->type() == QKeyEvent::KeyPress &&
      event->matches(QKeySequence::Copy) &&
-     this->textCursor().selectedText().isEmpty() &&
+     textCursor().selectedText().isEmpty() &&
      line <= m_results.size() )
   {
     QApplication::clipboard()->setText(m_results[line].c_str());
