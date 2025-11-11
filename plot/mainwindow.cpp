@@ -22,26 +22,45 @@ MainWindow::MainWindow(QWidget *parent)
 
   ui->widget->setInteraction(QCP::iRangeDrag, true);
   ui->widget->setInteraction(QCP::iRangeZoom, true);
+  ui->widget->xAxis->setRange(-0.5, 3.5);
+  ui->widget->yAxis->setRange(-3.5, 3.5);
 
   ui->widget->installEventFilter(this);
 
   m_recalcTimer.setSingleShot(true);
 
   ui->plainTextEdit->setPlainText(
-    "if (x > 2*pi) {\n"
-    "  y:=x-2*pi;\n"
-    "} else if (x > 0) {\n"
-    "  y:=sin(x);\n"
-    "} else {\n"
-    "  y:=x;\n"
-    "};\n"
-    "if (x > -1 and x < 1)\n"
+    "// Comments start with // or #\n"
+    "// Use built in functions like sin(), cos(), etc.\n"
+    "// Any variable a value is asigned to via := ends up in the graph. Variable names are case-sensitive.\n"
+    "\n"
+    "Sin := 2+sin(x*pi);\n"
+    "\n"
+    "// Local variables can be created with \"var\".\n"
+    "\n"
+    "var rel_x := x-floor(x);\n"
+    "\n"
+    "// If statements can be used to define piece-wise functions.\n"
+    "if (floor(x)%2)\n"
     "{\n"
-    "  z:=1;\n"
-    "} else {\n"
-    "  z:=inf\n"
+    "  Rect:= -3;\n"
+    "  Par:= (2*rel_x-1)^2-1;\n"
+    "}\n"
+    "else\n"
+    "{\n"
+    "  Rect:=-1;\n"
+    "  Par:=1-(2*rel_x-1)^2;\n"
     "};\n"
-    "a:=x^2;");
+    "\n"
+    "// if you want a function to have a gap, simply assign \"inf\".\n"
+    "if (x > 2.25 and x < 2.75)\n"
+    "{\n"
+    "  Par := inf;\n"
+    "  Sin := inf;\n"
+    "  Rect := inf;\n"
+    "};\n"
+
+  );
 }
 
 MainWindow::~MainWindow()
