@@ -165,31 +165,54 @@ void MainWindow::updateCalculation()
 
     auto customPlot = ui->widget;
     customPlot->clearGraphs();
+
+    int N = std::max(ui->widget->width()*2, 100);
+
+    std::map<std::string, double*> variables;
+
     for (const auto & v : variable_list)
     {
-      double & y = unknown_var_symbol_table.variable_ref(v);
-      // generate some data:
-      int N = std::max(ui->widget->width()*2, 100);
-      QVector<double> X(N), Y(N); // initialize with entries 0..100
-      for (int i=0; i<N; ++i)
+      variables[v] = &unknown_var_symbol_table.variable_ref(v);
+    }
+    QVector<double> X(N);
+    std::map<std::string, QVector<double>> Y; // initialize with entries 0..100
+
+    double expr_value = 0;
+
+    if (variables.empty())
+    {
+      variables["y"] = &expr_value;
+    }
+
+    for (auto v : variables)
+    {
+      Y[v.first].resize(N);
+    }
+
+    for (int i=0; i<N; ++i)
+    {
+      X[i] = i * (range.upper - range.lower) / (double)(N-1) + range.lower;
+      x = X[i];
+      expr_value = expression.value();
+      for (auto v : variables)
       {
-        X[i] = i * (range.upper - range.lower) / (double)(N-1) + range.lower;
-        //X[i] = i/50.0 - 1; // x goes from -1 to 1
-        x = X[i];
-        expression.value();
-        Y[i] = y;
+        Y[v.first][i] = *(v.second);
       }
+    }
+    for (auto v : variables)
+    {
       // create graph and assign data to it:
       customPlot->addGraph();
       auto graphIndex = customPlot->graphCount()-1;
       auto graph = customPlot->graph(graphIndex);
       graph->setAntialiased(true);
-      graph->setData(X, Y);
-      QString name = v.c_str();
+      graph->setData(X, Y[v.first]);
+      QString name = v.first.c_str();
       name.replace('_', ' ');
       graph->setName(name);
       graph->setPen(QPen(graphColors[graphIndex % graphColors.size()]));
     }
+
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
     customPlot->legend->setVisible(true);
