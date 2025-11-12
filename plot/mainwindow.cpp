@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "savewavdialog.h"
 
 #include <QScrollBar>
 
@@ -17,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
   //connect(ui->widget->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(updateCalculation()));
   connect(ui->widget->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(startCalculationTimer()));
   connect(ui->widget->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(startCalculationTimer()));
+
+  connect(ui->actionSave_WAV, &QAction::triggered, this, &MainWindow::saveWav);
 
   connect(&m_recalcTimer, &QTimer::timeout, this, &MainWindow::updateCalculation);
 
@@ -108,6 +111,24 @@ static const std::vector<QColor> graphColors = {
   QColor("#d65d0e")
 };
 #endif
+
+static void setupParser(
+    double & x,
+    symbol_table_t & unknown_var_symbol_table,
+    symbol_table_t & symbol_table,
+    expression_t & expression,
+    parser_t & parser)
+{
+  symbol_table.add_variable("x", x);
+  symbol_table.add_constants();
+
+  expression.register_symbol_table(unknown_var_symbol_table);
+  expression.register_symbol_table(symbol_table);
+
+  parser.enable_unknown_symbol_resolver();
+  parser.settings().disable_commutative_check();
+
+}
 
 void MainWindow::updateCalculation()
 {
@@ -209,4 +230,97 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
     }
   }
   return QObject::eventFilter(obj, event);
+}
+
+static void writeMonoWav(FILE * fp, float * data, size_t N, int channels, int loop)
+{
+  uint32_t rate = 48000;  // Sample rate
+  uint32_t frame_count = N * loop;
+  uint16_t chan_num = channels;  // Number of channels
+  uint16_t bits = 16;  // Bit depth
+  uint32_t length = frame_count*chan_num*bits / 8;
+  int16_t byte;
+  // scales signal to use full 16bit resolution
+  float multiplier = pow(2, bits-1)-1; // /* 32767
+
+  //// WAVE Header Data
+  fwrite("RIFF", 1, 4, fp);
+  uint32_t chunk_size = length + 44 - 8;
+  fwrite(&chunk_size, 4, 1, fp);
+  fwrite("WAVE", 1, 4, fp);
+  fwrite("fmt ", 1, 4, fp);
+  uint32_t subchunk1_size = 16;
+  fwrite(&subchunk1_size, 4, 1, fp);
+  uint16_t fmt_type = 1;  // 1 = PCM
+  fwrite(&fmt_type, 2, 1, fp);
+  fwrite(&chan_num, 2, 1, fp);
+  fwrite(&rate, 4, 1, fp);
+  // (Sample Rate * BitsPerSample * Channels) / 8
+  uint32_t byte_rate = rate * bits * chan_num / 8;
+  fwrite(&byte_rate, 4, 1, fp);
+  uint16_t block_align = chan_num * bits / 8;
+  fwrite(&block_align, 2, 1, fp);
+  fwrite(&bits, 2, 1, fp);
+
+  // Marks the start of the data
+  fwrite("data", 1, 4, fp);
+  fwrite(&length, 4, 1, fp);  // Data size
+  for (int l = 0; l < loop; l++)
+  {
+    for (uint32_t i = 0; i < N; i++)
+    {
+      for (int c = 0; c < chan_num; c++)
+      {
+        byte = (data[i * channels + c] * multiplier);
+        fwrite(&byte, 2, 1, fp);
+      }
+    }
+  }
+}
+
+void MainWindow::saveWav()
+{
+  auto d = new SaveWavDialog(this);
+  if (QDialog::Accepted == d->exec())
+  {
+    auto fileName = QFileDialog::getSaveFileName(this);
+    if (!fileName.isEmpty())
+    {
+      FILE * f = fopen(fileName.toUtf8().constData(), "wb");
+      if (f)
+      {
+        double x;
+        symbol_table_t unknown_var_symbol_table;
+        symbol_table_t symbol_table;
+        expression_t expression;
+        parser_t parser;
+        setupParser(x, unknown_var_symbol_table, symbol_table, expression, parser);
+        auto parser_input = ui->plainTextEdit->toPlainText().toStdString();
+        if (parser.compile(parser_input, expression))
+        {
+          double from = d->from();
+          double to = d->to();
+          size_t N = d->N();
+          std::vector<std::string> variable_list;
+          unknown_var_symbol_table.get_variable_list(variable_list);
+
+          auto channels = variable_list.size();
+          std::vector<float> data(N * channels);
+
+          for (size_t i = 0; i < N; i++)
+          {
+            x = i * (to-from) / (double)(N-1) + from;
+            expression.value();
+            for (size_t n = 0; n < channels; n++)
+            {
+              double & y = unknown_var_symbol_table.variable_ref(variable_list[n]);
+              data[i * channels + n] = y;
+            }
+          }
+          writeMonoWav(f, data.data(), N, channels, d->loop());
+          fclose(f);
+        }
+      }
+    }
+  }
 }

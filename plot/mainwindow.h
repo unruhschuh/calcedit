@@ -25,6 +25,7 @@ class MainWindow : public QMainWindow
   public slots:
     void updateCalculation();
     void startCalculationTimer();
+    void saveWav();
 
   private:
     QTimer m_recalcTimer;

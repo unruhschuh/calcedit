@@ -19,6 +19,9 @@ set(PROJECT_SOURCES
         mainwindow.ui
         qcustomplot.cpp
         qcustomplot.h
+        savewavdialog.cpp
+        savewavdialog.h
+        savewavdialog.ui
         ../deps/exprtk/exprtk.hpp
 )
 
