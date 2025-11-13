@@ -1,0 +1,17 @@
+/// Discrete Fourier Transform
+const var N := 1024;
+var x[N];
+var X[N];
+for (var n := 0; n < N; n += 1)
+{
+  x[n] := 3 + sin(2*pi/N * n * 10);
+};
+for (var k := 0; k < N; k += 1)
+{
+  for (var n := 0; n < N; n += 1)
+  {
+    X[k] += x[n] * exp(-i * 2 * pi * k / N * n)
+  };
+  X[k] *= (1/N);
+};
+X[0];

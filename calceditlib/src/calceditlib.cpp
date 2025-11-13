@@ -153,9 +153,25 @@ std::string toString(cmplx::complex_t x)
   {
     return fmt::format("{}", x.c_.real());
   }
+  else if (x.c_.real() == 0.0)
+  {
+    if (x.c_.imag() == 1.0)
+      return fmt::format("i");
+    else if (x.c_.imag() == -1.0)
+      return fmt::format("-i");
+    else
+      return fmt::format("{} * i", x.c_.imag());
+  }
   else
   {
-    return fmt::format("{} + {} * i", x.c_.real(), x.c_.imag());
+    if (x.c_.imag() == 1.0)
+      return fmt::format("{} + i", x.c_.real());
+    else if (x.c_.imag() == -1.0)
+      return fmt::format("{} - i", x.c_.real());
+    else if (x.c_.imag() < 0)
+      return fmt::format("{} - {} * i", x.c_.real(), abs(x.c_.imag()));
+    else
+      return fmt::format("{} + {} * i", x.c_.real(), x.c_.imag());
   }
 }
 

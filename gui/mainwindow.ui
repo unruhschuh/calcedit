@@ -26,6 +26,7 @@
       <property name="font">
        <font>
         <family>Courier</family>
+        <bold>true</bold>
        </font>
       </property>
      </widget>
@@ -38,7 +39,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>31</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_View">
@@ -82,6 +83,7 @@
        <property name="font">
         <font>
          <family>Courier</family>
+         <bold>true</bold>
         </font>
        </property>
        <property name="columnCount">
