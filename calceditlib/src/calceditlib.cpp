@@ -108,7 +108,7 @@ struct my_usr final : public parser_t::unknown_symbol_resolver
       if (1) // (std::islower(unknown_symbol[0]))
       {
         // Default value of zero
-        result = symbol_table.create_variable(unknown_symbol,T(std::numeric_limits<double>::quiet_NaN()));
+        result = symbol_table.create_variable(unknown_symbol,T(std::numeric_limits<long double>::quiet_NaN()));
 
         if (!result)
         {
@@ -126,7 +126,7 @@ struct my_usr final : public parser_t::unknown_symbol_resolver
         {
           size_t vector_size = std::stoul(unknown_symbol.substr(pos+1));
           auto vector_name = unknown_symbol.substr(0, pos);
-          mVectors[vector_name] = std::vector<T>(vector_size, T(std::numeric_limits<double>::quiet_NaN()));
+          mVectors[vector_name] = std::vector<T>(vector_size, T(std::numeric_limits<long double>::quiet_NaN()));
           result = symbol_table.add_vector(unknown_symbol, mVectors[vector_name]);
           // Default value of empty string
           //result = symbol_table.create_stringvar(unknown_symbol,"");
@@ -209,7 +209,8 @@ void calculate(
   resultString.clear();
   vectors.clear();
   variables.clear();
-  variables["pi"] = {3.14159265358979323846,0};
+ //                  3.1415926535897932384626433L
+  variables["pi"] = {3.1415926535897932384626433L,0.0L};
   auto lines = split(input, "\n");
   std::string parser_input;
   bool block = false;
@@ -282,7 +283,7 @@ void calculate(
       else if ( ! parser.lexer().empty() )
       {
         resultString += parser.error();
-        variables["ans"] = {std::numeric_limits<double>::quiet_NaN(),0};
+        variables["ans"] = {std::numeric_limits<long double>::quiet_NaN(),0};
       }
       parser_input.clear();
     }

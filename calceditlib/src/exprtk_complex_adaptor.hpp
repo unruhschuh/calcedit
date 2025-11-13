@@ -141,12 +141,12 @@ namespace exprtk
 
             inline bool is_true_impl (const cmplx::complex_t v)
             {
-               return (0.0 != v);
+               return (0.0L != v);
             }
 
             inline bool is_false_impl(const cmplx::complex_t v)
             {
-               return (0.0 == v);
+               return (0.0L == v);
             }
 
             template <typename T>
@@ -364,9 +364,9 @@ namespace exprtk
                                  cmplx::complex_t& t,
                                  details::numeric::details::complex_type_tag)
       {
-         typename numeric::details::number_type<double>::type num_type;
-         double real_component;
-         const bool result = string_to_real<Iterator,double>(itr_external,end,real_component,num_type);
+         typename numeric::details::number_type<SCALAR>::type num_type;
+         SCALAR real_component;
+         const bool result = string_to_real<Iterator,SCALAR>(itr_external,end,real_component,num_type);
          t.c_.real(real_component);
          return result;
       }
@@ -381,7 +381,7 @@ namespace exprtk
       {
          inline void print_type(const std::string& fmt, const cmplx::complex_t v, exprtk::details::numeric::details::complex_type_tag)
          {
-            printf(fmt.c_str(),(double)v.c_.real(), (double)v.c_.imag());
+            printf(fmt.c_str(),(SCALAR)v.c_.real(), (SCALAR)v.c_.imag());
          }
       }
    }}

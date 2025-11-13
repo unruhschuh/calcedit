@@ -25,12 +25,13 @@
 #include <complex>
 #include <limits>
 
+typedef long double SCALAR;
 
 namespace cmplx
 {
    struct complex_t
    {
-      typedef std::complex<double>  value_type;
+      typedef std::complex<SCALAR>  value_type;
 
       complex_t()
       : c_(0.0)
@@ -44,7 +45,7 @@ namespace cmplx
          sanitize_negative_zero();
       }
 
-      complex_t(const double& real,const double& imag)
+      complex_t(const SCALAR& real,const SCALAR& imag)
       : c_(real,imag)
       {
          sanitize_negative_zero();
@@ -56,22 +57,22 @@ namespace cmplx
          sanitize_negative_zero();
       }
 
-      complex_t& operator=(const double &d) {
+      complex_t& operator=(const SCALAR &d) {
         c_ = d;
         sanitize_negative_zero();
         return *this;
       }
 
-      double real() const {
+      SCALAR real() const {
         return c_.real();
       }
 
-      double imag() const {
+      SCALAR imag() const {
         return c_.imag();
       }
 
       template <typename T>
-      complex_t& operator=(const T d) { c_ = (double)d; return *this; }
+      complex_t& operator=(const T d) { c_ = (SCALAR)d; return *this; }
 
       inline complex_t& operator  =(const complex_t& r) { c_  = r.c_; return *this; }
       inline complex_t& operator +=(const complex_t& r) { c_ += r.c_; return *this; }
@@ -79,11 +80,11 @@ namespace cmplx
       inline complex_t& operator *=(const complex_t& r) { c_ *= r.c_; return *this; }
       inline complex_t& operator /=(const complex_t& r) { c_ /= r.c_; return *this; }
 
-      inline complex_t& operator  =(const double r) { c_  = r; return *this; }
-      inline complex_t& operator +=(const double r) { c_ += r; return *this; }
-      inline complex_t& operator -=(const double r) { c_ -= r; return *this; }
-      inline complex_t& operator *=(const double r) { c_ *= r; return *this; }
-      inline complex_t& operator /=(const double r) { c_ /= r; return *this; }
+      inline complex_t& operator  =(const SCALAR r) { c_  = r; return *this; }
+      inline complex_t& operator +=(const SCALAR r) { c_ += r; return *this; }
+      inline complex_t& operator -=(const SCALAR r) { c_ -= r; return *this; }
+      inline complex_t& operator *=(const SCALAR r) { c_ *= r; return *this; }
+      inline complex_t& operator /=(const SCALAR r) { c_ /= r; return *this; }
 
       inline complex_t& operator++() { c_ += 1.0; return *this; }
       inline complex_t& operator--() { c_ -= 1.0; return *this; }
@@ -95,12 +96,12 @@ namespace cmplx
 
       template <typename T>
       inline operator T()    const { return static_cast<T>(c_.real()); }
-      inline operator bool() const { return (c_ != 0.0);        }
+      inline operator bool() const { return (c_ != 0.0L);              }
 
       inline bool operator ==(const complex_t& r) const { return (c_ == r.c_); }
       inline bool operator !=(const complex_t& r) const { return (c_ != r.c_); }
 
-      std::complex<double> c_;
+      std::complex<SCALAR> c_;
    private:
       void sanitize_negative_zero()
       {
@@ -139,7 +140,7 @@ namespace cmplx
    inline complex_t operator* (const complex_t& r0, const Type& r1) { return complex_t(r0.c_ * r1); } \
    inline complex_t operator/ (const complex_t& r0, const Type& r1) { return complex_t(r0.c_ / r1); } \
 
-   complex_define_inequalities(double)
+   complex_define_inequalities(SCALAR)
 }
 
 namespace std
@@ -153,35 +154,35 @@ namespace std
    public:
 
       static const bool is_specialized = true;
-      static number_complex_t (min) ()        { return complex_t(std::numeric_limits<double>::min()); }
-      static number_complex_t (max) ()        { return complex_t(std::numeric_limits<double>::max()); }
+      static number_complex_t (min) ()        { return complex_t(std::numeric_limits<SCALAR>::min()); }
+      static number_complex_t (max) ()        { return complex_t(std::numeric_limits<SCALAR>::max()); }
       static number_complex_t lowest()        { return -(max)(); }
-      static number_complex_t epsilon()       { return complex_t(std::numeric_limits<double>::epsilon      ()); }
-      static number_complex_t round_error()   { return complex_t(std::numeric_limits<double>::round_error  ()); }
-      static number_complex_t infinity()      { return complex_t(std::numeric_limits<double>::infinity     ()); }
-      static number_complex_t quiet_NaN()     { return complex_t(std::numeric_limits<double>::quiet_NaN    ()); }
-      static number_complex_t signaling_NaN() { return complex_t(std::numeric_limits<double>::signaling_NaN()); }
-      static number_complex_t denorm_min()    { return complex_t(std::numeric_limits<double>::denorm_min   ()); }
-      static const int digits             = std::numeric_limits<double>::digits;
-      static const int digits10           = std::numeric_limits<double>::digits10;
-      static const int radix              = std::numeric_limits<double>::radix;
-      static const int min_exponent       = std::numeric_limits<double>::min_exponent;
-      static const int min_exponent10     = std::numeric_limits<double>::min_exponent10;
-      static const int max_exponent       = std::numeric_limits<double>::max_exponent;
-      static const int max_exponent10     = std::numeric_limits<double>::max_exponent10;
-      static const bool has_infinity      = std::numeric_limits<double>::has_infinity;
-      static const bool has_quiet_NaN     = std::numeric_limits<double>::has_quiet_NaN;
-      static const bool has_signaling_NaN = std::numeric_limits<double>::has_signaling_NaN;
-      static const bool has_denorm_loss   = std::numeric_limits<double>::has_denorm_loss;
-      static const bool is_signed         = std::numeric_limits<double>::is_signed;
-      static const bool is_integer        = std::numeric_limits<double>::is_integer;
-      static const bool is_exact          = std::numeric_limits<double>::is_exact;
-      static const bool is_iec559         = std::numeric_limits<double>::is_iec559;
-      static const bool is_bounded        = std::numeric_limits<double>::is_bounded;
-      static const bool is_modulo         = std::numeric_limits<double>::is_modulo;
-      static const bool traps             = std::numeric_limits<double>::traps;
-      static const float_denorm_style has_denorm = std::numeric_limits<double>::has_denorm;
-      static const float_round_style round_style = std::numeric_limits<double>::round_style;
+      static number_complex_t epsilon()       { return complex_t(std::numeric_limits<SCALAR>::epsilon      ()); }
+      static number_complex_t round_error()   { return complex_t(std::numeric_limits<SCALAR>::round_error  ()); }
+      static number_complex_t infinity()      { return complex_t(std::numeric_limits<SCALAR>::infinity     ()); }
+      static number_complex_t quiet_NaN()     { return complex_t(std::numeric_limits<SCALAR>::quiet_NaN    ()); }
+      static number_complex_t signaling_NaN() { return complex_t(std::numeric_limits<SCALAR>::signaling_NaN()); }
+      static number_complex_t denorm_min()    { return complex_t(std::numeric_limits<SCALAR>::denorm_min   ()); }
+      static const int digits             = std::numeric_limits<SCALAR>::digits;
+      static const int digits10           = std::numeric_limits<SCALAR>::digits10;
+      static const int radix              = std::numeric_limits<SCALAR>::radix;
+      static const int min_exponent       = std::numeric_limits<SCALAR>::min_exponent;
+      static const int min_exponent10     = std::numeric_limits<SCALAR>::min_exponent10;
+      static const int max_exponent       = std::numeric_limits<SCALAR>::max_exponent;
+      static const int max_exponent10     = std::numeric_limits<SCALAR>::max_exponent10;
+      static const bool has_infinity      = std::numeric_limits<SCALAR>::has_infinity;
+      static const bool has_quiet_NaN     = std::numeric_limits<SCALAR>::has_quiet_NaN;
+      static const bool has_signaling_NaN = std::numeric_limits<SCALAR>::has_signaling_NaN;
+      static const bool has_denorm_loss   = std::numeric_limits<SCALAR>::has_denorm_loss;
+      static const bool is_signed         = std::numeric_limits<SCALAR>::is_signed;
+      static const bool is_integer        = std::numeric_limits<SCALAR>::is_integer;
+      static const bool is_exact          = std::numeric_limits<SCALAR>::is_exact;
+      static const bool is_iec559         = std::numeric_limits<SCALAR>::is_iec559;
+      static const bool is_bounded        = std::numeric_limits<SCALAR>::is_bounded;
+      static const bool is_modulo         = std::numeric_limits<SCALAR>::is_modulo;
+      static const bool traps             = std::numeric_limits<SCALAR>::traps;
+      static const float_denorm_style has_denorm = std::numeric_limits<SCALAR>::has_denorm;
+      static const float_round_style round_style = std::numeric_limits<SCALAR>::round_style;
    };
 }
 
@@ -233,7 +234,7 @@ namespace cmplx
    inline complex_t   g2d(const complex_t v) { return complex_t(v.c_ * (9.0/10.0)); }
    inline complex_t  notl(const complex_t v) { return complex_t(v    != complex_t(0) ? complex_t(0) : complex_t(1)); }
    inline complex_t  frac(const complex_t v) { return complex_t(v.c_.real() - static_cast<long long>(v.c_.real()));  }
-   inline complex_t trunc(const complex_t v) { return complex_t((double)static_cast<long long>(v.c_.real()));        }
+   inline complex_t trunc(const complex_t v) { return complex_t((SCALAR)static_cast<long long>(v.c_.real()));        }
 
    inline complex_t modulus(const complex_t v0, const complex_t v1) { return complex_t(fmod(v0.c_.real() , v1.c_.real()),0); }
    inline complex_t     pow(const complex_t v0, const complex_t v1) {
@@ -264,7 +265,7 @@ namespace cmplx
    {
       const complex_t v = vx;
       if (abs(v) < complex_t(0.00001))
-         return complex_t(v + (0.5 * v * v));
+         return complex_t(v + (0.5L * v * v));
       else
          return complex_t(exp(v) - complex_t(1));
    }
@@ -287,7 +288,7 @@ namespace cmplx
             return (complex_t(-0.5) * v + complex_t(1)) * v;
       }
       else
-         return complex_t(std::numeric_limits<double>::quiet_NaN());
+         return complex_t(std::numeric_limits<SCALAR>::quiet_NaN());
    }
 
    inline complex_t round(const complex_t v)
