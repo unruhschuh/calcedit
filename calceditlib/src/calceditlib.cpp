@@ -149,7 +149,7 @@ struct my_usr final : public parser_t::unknown_symbol_resolver
 
 std::string toString(cmplx::complex_t x)
 {
-  if (0) // (x.c_.imag() == 0.0)
+  if (x.c_.imag() == 0.0)
   {
     return fmt::format("{}", x.c_.real());
   }
@@ -157,15 +157,6 @@ std::string toString(cmplx::complex_t x)
   {
     return fmt::format("{} + {}i", x.c_.real(), x.c_.imag());
   }
-
-  //resultString += fmt::format("{} + {}", variables["ans"].c_.real(), variables["ans"].c_.imag());
-  //std::string s;
-  //s += std::to_string(x.c_.real());
-  //if (x.c_.imag() != 0.0)
-  //{
-  //  s += " + " + std::to_string(x.c_.imag());
-  //}
-  //return s;
 }
 
 void calculate(

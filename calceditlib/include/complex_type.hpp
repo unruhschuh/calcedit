@@ -34,21 +34,33 @@ namespace cmplx
 
       complex_t()
       : c_(0.0)
-      {}
+      {
+         sanitize_negative_zero();
+      }
 
       complex_t(const complex_t& d)
       : c_(d.c_)
-      {}
+      {
+         sanitize_negative_zero();
+      }
 
       complex_t(const double& real,const double& imag)
       : c_(real,imag)
-      {}
+      {
+         sanitize_negative_zero();
+      }
 
       complex_t(const value_type& v)
       : c_(v)
-      {}
+      {
+         sanitize_negative_zero();
+      }
 
-      complex_t& operator=(const double &d) { c_ = d; return *this; }
+      complex_t& operator=(const double &d) {
+        c_ = d;
+        sanitize_negative_zero();
+        return *this;
+      }
 
       template <typename T>
       complex_t& operator=(const T d) { c_ = (double)d; return *this; }
@@ -81,6 +93,12 @@ namespace cmplx
       inline bool operator !=(const complex_t& r) const { return (c_ != r.c_); }
 
       std::complex<double> c_;
+   private:
+      void sanitize_negative_zero()
+      {
+         if (c_.real() == 0) c_.real(0);
+         if (c_.imag() == 0) c_.imag(0);
+      }
    };
 
    inline complex_t operator+(const complex_t r0, const complex_t r1) { return complex_t(r0.c_ + r1.c_); }
