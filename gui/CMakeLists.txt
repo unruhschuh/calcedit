@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 
 project(calcedit VERSION 0.1 LANGUAGES CXX)
 
+if (WIN32)
+  add_compile_options(/bigobj)
+endif()
+
 if (NOT TARGET calceditlib)
   add_subdirectory(../calceditlib ${CMAKE_BINARY_DIR}/calceditlib)
 endif()

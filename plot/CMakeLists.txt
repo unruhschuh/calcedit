@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 
 project(calcplot VERSION 0.1 LANGUAGES CXX)
 
+if (WIN32)
+  add_compile_options(/bigobj)
+endif()
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
