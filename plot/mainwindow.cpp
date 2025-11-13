@@ -112,41 +112,55 @@ static const std::vector<QColor> graphColors = {
 };
 #endif
 
-static void setupParser(
-    double & x,
-    symbol_table_t & unknown_var_symbol_table,
-    symbol_table_t & symbol_table,
-    expression_t & expression,
-    parser_t & parser)
+template <typename T>
+struct my_usr final : public parser_t::unknown_symbol_resolver
 {
-  symbol_table.add_variable("x", x);
-  symbol_table.add_constants();
+typedef typename parser_t::unknown_symbol_resolver usr_t;
 
-  expression.register_symbol_table(unknown_var_symbol_table);
-  expression.register_symbol_table(symbol_table);
+    my_usr(std::vector<std::string> & variable_list) : m_variable_list{variable_list}
+    {}
 
-  parser.enable_unknown_symbol_resolver();
-  parser.settings().disable_commutative_check();
+bool process(const std::string& unknown_symbol,
+             typename usr_t::usr_symbol_type& st,
+             T& default_value,
+             std::string& error_message) override
+{
+  st = usr_t::e_usr_variable_type;
+  default_value = T(std::numeric_limits<double>::quiet_NaN());
 
+  m_variable_list.push_back(unknown_symbol);
+
+  return true;
 }
+std::vector<std::string> & m_variable_list;
+};
+
+struct Parser
+{
+  Parser()
+  {
+    symbol_table.add_variable("x", x);
+    symbol_table.add_constants();
+
+    expression.register_symbol_table(unknown_var_symbol_table);
+    expression.register_symbol_table(symbol_table);
+
+    parser.enable_unknown_symbol_resolver(usr);
+    parser.settings().disable_commutative_check();
+  };
+    double x;
+    symbol_table_t unknown_var_symbol_table;
+    symbol_table_t symbol_table;
+    expression_t expression;
+    parser_t parser;
+    std::vector<std::string> variable_list;
+    my_usr<double> usr{variable_list};
+};
 
 void MainWindow::updateCalculation()
 {
-  double x = 0;
+  Parser parser;
 
-  symbol_table_t unknown_var_symbol_table;
-
-  symbol_table_t symbol_table;
-  symbol_table.add_variable("x", x);
-  symbol_table.add_constants();
-
-  expression_t expression;
-  expression.register_symbol_table(unknown_var_symbol_table);
-  expression.register_symbol_table(symbol_table);
-
-  parser_t parser;
-  parser.enable_unknown_symbol_resolver();
-  parser.settings().disable_commutative_check();
   auto parser_input = ui->plainTextEdit->toPlainText().toStdString();
 
   //bool found = false;
@@ -158,56 +172,56 @@ void MainWindow::updateCalculation()
     range.upper += rangeWidth;
   }
 
-  if (parser.compile(parser_input, expression))
+  if (parser.parser.compile(parser_input, parser.expression))
   {
-    std::vector<std::string> variable_list;
-    unknown_var_symbol_table.get_variable_list(variable_list);
-
     auto customPlot = ui->widget;
     customPlot->clearGraphs();
 
     int N = std::max(ui->widget->width()*2, 100);
 
-    std::map<std::string, double*> variables;
-
-    for (const auto & v : variable_list)
+    struct Variable
     {
-      variables[v] = &unknown_var_symbol_table.variable_ref(v);
+      std::string name;
+      double *value;
+      QVector<double> Y;
+    };
+
+    std::vector<Variable> variables;
+
+    for (const auto & v : parser.variable_list)
+    {
+      //variables[v] = &unknown_var_symbol_table.variable_ref(v);
+      variables.push_back({v, &parser.unknown_var_symbol_table.variable_ref(v), QVector<double>(N)});
     }
     QVector<double> X(N);
-    std::map<std::string, QVector<double>> Y; // initialize with entries 0..100
 
     double expr_value = 0;
 
     if (variables.empty())
     {
-      variables["y"] = &expr_value;
-    }
-
-    for (auto v : variables)
-    {
-      Y[v.first].resize(N);
+      variables.push_back({"y", &expr_value, QVector<double>(N)});
     }
 
     for (int i=0; i<N; ++i)
     {
       X[i] = i * (range.upper - range.lower) / (double)(N-1) + range.lower;
-      x = X[i];
-      expr_value = expression.value();
-      for (auto v : variables)
+      parser.x = X[i];
+      expr_value = parser.expression.value();
+      for (auto &v : variables)
       {
-        Y[v.first][i] = *(v.second);
+        v.Y[i] = *(v.value);
       }
     }
-    for (auto v : variables)
+    for (auto &v : variables)
     {
       // create graph and assign data to it:
       customPlot->addGraph();
       auto graphIndex = customPlot->graphCount()-1;
       auto graph = customPlot->graph(graphIndex);
       graph->setAntialiased(true);
-      graph->setData(X, Y[v.first]);
-      QString name = v.first.c_str();
+      //graph->setData(X, Y[v.first]);
+      graph->setData(X, v.Y);
+      QString name = v.name.c_str();
       name.replace('_', ' ');
       graph->setName(name);
       graph->setPen(QPen(graphColors[graphIndex % graphColors.size()]));
@@ -219,12 +233,12 @@ void MainWindow::updateCalculation()
     customPlot->replot();
     statusBar()->clearMessage();
   }
-  else if ( ! parser.lexer().empty() )
+  else if ( ! parser.parser.lexer().empty() )
   {
     //statusBar()->showMessage(parser.error().c_str());
     typedef exprtk::parser_error::type error_t;
 
-    error_t error = parser.get_error(0);
+    error_t error = parser.parser.get_error(0);
 
     exprtk::parser_error::update_error(error,parser_input);
 
@@ -312,31 +326,24 @@ void MainWindow::saveWav()
       FILE * f = fopen(fileName.toUtf8().constData(), "wb");
       if (f)
       {
-        double x;
-        symbol_table_t unknown_var_symbol_table;
-        symbol_table_t symbol_table;
-        expression_t expression;
-        parser_t parser;
-        setupParser(x, unknown_var_symbol_table, symbol_table, expression, parser);
+        Parser parser;
         auto parser_input = ui->plainTextEdit->toPlainText().toStdString();
-        if (parser.compile(parser_input, expression))
+        if (parser.parser.compile(parser_input, parser.expression))
         {
           double from = d->from();
           double to = d->to();
           size_t N = d->N();
-          std::vector<std::string> variable_list;
-          unknown_var_symbol_table.get_variable_list(variable_list);
 
-          auto channels = variable_list.size();
+          auto channels = parser.variable_list.size();
           std::vector<float> data(N * channels);
 
           for (size_t i = 0; i < N; i++)
           {
-            x = i * (to-from) / (double)(N-1) + from;
-            expression.value();
+            parser.x = i * (to-from) / (double)(N-1) + from;
+            parser.expression.value();
             for (size_t n = 0; n < channels; n++)
             {
-              double & y = unknown_var_symbol_table.variable_ref(variable_list[n]);
+              double & y = parser.unknown_var_symbol_table.variable_ref(parser.variable_list[n]);
               data[i * channels + n] = y;
             }
           }
