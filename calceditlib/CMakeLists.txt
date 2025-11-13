@@ -4,7 +4,9 @@ project(calceditlib)
 
 set(SRC
   src/calceditlib.cpp
+  src/exprtk_complex_adaptor.hpp
   include/calceditlib.h
+  include/complex_type.hpp
   )
 
 add_library(calceditlib ${SRC})

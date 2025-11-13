@@ -1,0 +1,10 @@
+// Blancmange curve
+y:=0;
+for (var n := 0; n < 100; n+=1)
+{
+  var tmp:= 2^n*x;
+  var s1:= abs(tmp-floor(tmp));
+  var s2:= abs(tmp-ceil(tmp));
+  var s:= min(s1,s2);
+  y += s/(2^n);
+};

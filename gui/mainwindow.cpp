@@ -1,8 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-
 #include "calceditlib.h"
-
 
 #include <QScrollBar>
 
@@ -60,8 +58,8 @@ void MainWindow::updateCalculation()
 {
   std::string input = ui->input->toPlainText().toStdString();
   std::string results;
-  std::map<std::string, double> variables;
-  std::map<std::string, std::vector<double>> vectors;
+  std::map<std::string, cmplx::complex_t> variables;
+  std::map<std::string, std::vector<cmplx::complex_t>> vectors;
   calculate(input, variables, vectors, results);
   ui->input->setResults(split_string_by_newline(results));
 
@@ -70,7 +68,7 @@ void MainWindow::updateCalculation()
   {
     QStringList rows;
     rows.append(var.first.c_str());
-    rows.append(QString::number(var.second));
+    rows.append(toString(var.second).c_str());
     items.append(new QTreeWidgetItem(static_cast<QTreeWidget *>(nullptr), rows));
   }
   ui->treeWidget->clear();

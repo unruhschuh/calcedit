@@ -1,6 +1,7 @@
 #include "calceditlib.h"
 
 #define exprtk_disable_caseinsensitivity
+#include "exprtk_complex_adaptor.hpp"
 #include "exprtk.hpp"
 
 #include <iostream>
@@ -8,10 +9,17 @@
 #include <regex>
 #include <fmt/format.h>
 
+#if 0
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
 typedef exprtk::parser<double>::settings_t settings_t;
+#else
+typedef exprtk::symbol_table<cmplx::complex_t> symbol_table_t;
+typedef exprtk::expression<cmplx::complex_t>   expression_t;
+typedef exprtk::parser<cmplx::complex_t>       parser_t;
+typedef exprtk::parser<cmplx::complex_t>::settings_t settings_t;
+#endif
 
 static bool emptyString(const std::string & s);
 static std::vector<std::string> split(const std::string str, const std::string regex_str);
@@ -139,17 +147,38 @@ struct my_usr final : public parser_t::unknown_symbol_resolver
 };
 #endif
 
+std::string toString(cmplx::complex_t x)
+{
+  if (0) // (x.c_.imag() == 0.0)
+  {
+    return fmt::format("{}", x.c_.real());
+  }
+  else
+  {
+    return fmt::format("{} + {}i", x.c_.real(), x.c_.imag());
+  }
+
+  //resultString += fmt::format("{} + {}", variables["ans"].c_.real(), variables["ans"].c_.imag());
+  //std::string s;
+  //s += std::to_string(x.c_.real());
+  //if (x.c_.imag() != 0.0)
+  //{
+  //  s += " + " + std::to_string(x.c_.imag());
+  //}
+  //return s;
+}
+
 void calculate(
     const std::string & input,
-    std::map<std::string, double> & variables,
-    std::map<std::string, std::vector<double>> & vectors,
+    std::map<std::string, cmplx::complex_t> & variables,
+    std::map<std::string, std::vector<cmplx::complex_t>> & vectors,
     std::string & resultString
     )
 {
   resultString.clear();
   vectors.clear();
   variables.clear();
-  variables["pi"]= 3.14159265358979323846;
+  variables["pi"] = {3.14159265358979323846,0};
   auto lines = split(input, "\n");
   std::string parser_input;
   bool block = false;
@@ -170,6 +199,8 @@ void calculate(
     {
       symbol_table_t unknown_var_symbol_table;
       symbol_table_t symbol_table;
+      cmplx::complex_t const_i = cmplx::complex_t(0.0,1.0);
+      symbol_table.add_constant("i", const_i);
       symbol_table.add_variable("ans", variables["ans"]);
       symbol_table.add_variable("pi", variables["pi"], true);
       //symbol_table.add_constants();
@@ -184,7 +215,7 @@ void calculate(
       expression_t expression;
       expression.register_symbol_table(unknown_var_symbol_table);
       expression.register_symbol_table(symbol_table);
-      my_usr<double> musr(variables, vectors);
+      my_usr<cmplx::complex_t> musr(variables, vectors);
       //parser_t parser(settings_t::compile_all_opts - settings_t::e_commutative_check);
       parser_t parser;
       parser.enable_unknown_symbol_resolver(&musr);
@@ -192,8 +223,9 @@ void calculate(
       if (parser.compile(parser_input, expression))
       {
         variables["ans"] = expression.value();
-        resultString += fmt::format("{}", variables["ans"]);
-        std::vector<std::pair<std::string,double>> variable_list;
+        //resultString += fmt::format("{} + {}", variables["ans"].c_.real(), variables["ans"].c_.imag());
+        resultString += toString(variables["ans"]);
+        std::vector<std::pair<std::string,cmplx::complex_t>> variable_list;
         unknown_var_symbol_table.get_variable_list(variable_list);
         for (auto & v : variable_list)
         {
@@ -215,7 +247,7 @@ void calculate(
       else if ( ! parser.lexer().empty() )
       {
         resultString += parser.error();
-        variables["ans"] = std::numeric_limits<double>::quiet_NaN();
+        variables["ans"] = {std::numeric_limits<double>::quiet_NaN(),0};
       }
       parser_input.clear();
     }

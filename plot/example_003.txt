@@ -1,0 +1,8 @@
+// Weierstrass
+y:=0;
+var a:=0.5;
+var b:=3;
+for (var n := 0; n < 500; n+=1)
+{
+  y += a^n*cos(b^n*pi*x);
+};

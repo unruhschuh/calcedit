@@ -1,0 +1,7 @@
+var e := 2 * 2;
+
+var X:= x-floor(x);
+if (floor(x)%2)
+ y:=1-(2*(X-0.5))^e;
+else
+ y:=-(1-(2*(X-0.5))^e);
