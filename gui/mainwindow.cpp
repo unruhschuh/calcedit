@@ -11,6 +11,8 @@ MainWindow::MainWindow(QWidget *parent)
   ui->setupUi(this);
 
   connect(ui->input, &QPlainTextEdit::textChanged, this, &MainWindow::updateCalculation);
+  connect(ui->action_Variables, &QAction::triggered, [this](){ ui->dockWidget->show(); });
+  connect(ui->input, &CalcEditEdit::currentResult, [this](QString s){ statusBar()->showMessage(s); });
 
   ui->input->setPlainText(
     "// Comments start with double slash\n"
@@ -38,15 +40,23 @@ MainWindow::MainWindow(QWidget *parent)
     "cos(pi)\n"
     "\n"
     "// For loops\n"
-    "y:=1; for(j:=0; j< 16; j+=1) { x*=2; };\n"
+    "y:=1; for(var j:=0; j< 16; j+=1) { y*=2; };\n"
     "\n"
     "/// Multi-line expressions start with either '///' or '##'\n"
     "y:=1;\n"
-    "for(i:=0; i< 16; i+=1)\n"
+    "for(var j:=0; j< 16; j+=1)\n"
     "{\n"
     "  y*=2;\n"
     "}; \n"
-        );
+    "\n"
+    "// complex numbers\n"
+    "sqrt(pi+i)\n"
+    "cos(ans)\n"
+    "z:=ans/abs(ans)\n"
+    "abs(ans)\n"
+    "real(z)\n"
+    "imag(z)\n"
+  );
 }
 
 MainWindow::~MainWindow()

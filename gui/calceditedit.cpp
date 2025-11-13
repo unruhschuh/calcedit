@@ -14,7 +14,6 @@
 CalcEditEdit::CalcEditEdit(QWidget *parent)
   : QPlainTextEdit(parent)
 {
-
 }
 
 void CalcEditEdit::paintEvent(QPaintEvent *event)
@@ -89,7 +88,7 @@ void CalcEditEdit::keyPressEvent(QKeyEvent *event)
      event->type() == QKeyEvent::KeyPress &&
      event->matches(QKeySequence::Copy) &&
      textCursor().selectedText().isEmpty() &&
-     line <= m_results.size() )
+     line < m_results.size() )
   {
     QApplication::clipboard()->setText(m_results[line].c_str());
     event->accept();
@@ -97,6 +96,12 @@ void CalcEditEdit::keyPressEvent(QKeyEvent *event)
   else
   {
     QPlainTextEdit::keyPressEvent(event);
+  }
+  // The line might change during QPlainTextEdit::keyPressEvent so we need to do this afterwards
+  line = textCursor().blockNumber();
+  if (line < m_results.size())
+  {
+    emit currentResult(m_results[line].c_str());
   }
 }
 

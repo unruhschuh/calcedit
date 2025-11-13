@@ -155,9 +155,33 @@ std::string toString(cmplx::complex_t x)
   }
   else
   {
-    return fmt::format("{} + {}i", x.c_.real(), x.c_.imag());
+    return fmt::format("{} + {} * i", x.c_.real(), x.c_.imag());
   }
 }
+
+template <typename T>
+struct real final : public exprtk::ifunction<T>
+{
+  real() : exprtk::ifunction<T>(1)
+  {}
+
+  T operator()(const T& v) override
+  {
+    return T(v.real());
+  }
+};
+
+template <typename T>
+struct imag final : public exprtk::ifunction<T>
+{
+  imag() : exprtk::ifunction<T>(1)
+  {}
+
+  T operator()(const T& v) override
+  {
+    return T(v.imag());
+  }
+};
 
 void calculate(
     const std::string & input,
@@ -194,6 +218,10 @@ void calculate(
       symbol_table.add_constant("i", const_i);
       symbol_table.add_variable("ans", variables["ans"]);
       symbol_table.add_variable("pi", variables["pi"], true);
+      real<cmplx::complex_t> real_fun;
+      imag<cmplx::complex_t> imag_fun;
+      symbol_table.add_function("real", real_fun);
+      symbol_table.add_function("imag", imag_fun);
       //symbol_table.add_constants();
       for (auto & v : variables)
       {

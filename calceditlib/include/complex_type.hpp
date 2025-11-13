@@ -62,6 +62,14 @@ namespace cmplx
         return *this;
       }
 
+      double real() const {
+        return c_.real();
+      }
+
+      double imag() const {
+        return c_.imag();
+      }
+
       template <typename T>
       complex_t& operator=(const T d) { c_ = (double)d; return *this; }
 
@@ -107,10 +115,17 @@ namespace cmplx
    inline complex_t operator/(const complex_t r0, const complex_t r1) { return complex_t(r0.c_ / r1.c_); }
 
 
+#if 0
    inline bool operator< (const complex_t c0, const complex_t c1) { return std::arg(c0.c_) <  std::arg(c1.c_); }
    inline bool operator> (const complex_t c0, const complex_t c1) { return std::arg(c0.c_) >  std::arg(c1.c_); }
    inline bool operator<=(const complex_t c0, const complex_t c1) { return std::arg(c0.c_) <= std::arg(c1.c_); }
    inline bool operator>=(const complex_t c0, const complex_t c1) { return std::arg(c0.c_) >= std::arg(c1.c_); }
+#else
+   inline bool operator< (const complex_t c0, const complex_t c1) { return c0.c_.real() <  c1.c_.real(); }
+   inline bool operator> (const complex_t c0, const complex_t c1) { return c0.c_.real() >  c1.c_.real(); }
+   inline bool operator<=(const complex_t c0, const complex_t c1) { return c0.c_.real() <= c1.c_.real(); }
+   inline bool operator>=(const complex_t c0, const complex_t c1) { return c0.c_.real() >= c1.c_.real(); }
+#endif
 
    #define complex_define_inequalities(Type)                                                          \
    inline complex_t operator+ (const Type& r0, const complex_t& r1) { return complex_t(r0 + r1.c_); } \
@@ -220,8 +235,14 @@ namespace cmplx
    inline complex_t  frac(const complex_t v) { return complex_t(v.c_.real() - static_cast<long long>(v.c_.real()));  }
    inline complex_t trunc(const complex_t v) { return complex_t((double)static_cast<long long>(v.c_.real()));        }
 
-   inline complex_t modulus(const complex_t v0, const complex_t v1) { return complex_t(fmod(v0.c_.real() , v1.c_.real()),fmod(v0.c_.imag() , v1.c_.imag())); }
-   inline complex_t     pow(const complex_t v0, const complex_t v1) { return complex_t(std::pow(v0.c_,v1.c_)            ); }
+   inline complex_t modulus(const complex_t v0, const complex_t v1) { return complex_t(fmod(v0.c_.real() , v1.c_.real()),0); }
+   inline complex_t     pow(const complex_t v0, const complex_t v1) {
+      if (v0.imag() == 0 && v1.imag() == 0.0) // && v1.real() > 0 && frac(v1).real() == 0)
+      {
+         return complex_t(std::pow(v0.c_.real(), v1.c_.real()), 0);
+      }
+      return complex_t(std::pow(v0.c_,v1.c_));
+   }
    inline complex_t    logn(const complex_t v0, const complex_t v1) { return complex_t(std::log(v0.c_) / std::log(v1.c_)); }
    inline complex_t    root(const complex_t v0, const complex_t v1) { return pow(v0,complex_t(1.0) / v1);                  }
    inline complex_t   atan2(const complex_t v0, const complex_t v1) { return complex_t(std::atan2(v0.c_.real(),v0.c_.imag()),std::atan2(v1.c_.real(),v1.c_.imag())); }
