@@ -66,6 +66,7 @@ set_target_properties(calcplot PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+set(CPACK_GENERATOR "TGZ")
 include(GNUInstallDirs)
 install(TARGETS calcplot
     BUNDLE DESTINATION .
@@ -76,3 +77,13 @@ install(TARGETS calcplot
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(calcplot)
 endif()
+
+qt_generate_deploy_app_script(
+    TARGET calcplot
+    OUTPUT_SCRIPT calcplot_deploy_script
+    NO_UNSUPPORTED_PLATFORM_ERROR
+)
+install(
+    SCRIPT ${calcplot_deploy_script}
+)
+include(CPack)

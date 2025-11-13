@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 
 project(calceditlib)
 
+if (NOT TARGET fmt)
+  add_subdirectory(../deps/fmt ${CMAKE_BINARY_DIR}/fmt)
+endif()
+
 set(SRC
   src/calceditlib.cpp
   src/exprtk_complex_adaptor.hpp

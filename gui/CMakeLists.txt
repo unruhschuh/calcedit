@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 
 project(calcedit VERSION 0.1 LANGUAGES CXX)
 
-#add_subdirectory(calceditlib)
-#add_subdirectory(deps/fmt)
+if (NOT TARGET calceditlib)
+  add_subdirectory(../calceditlib ${CMAKE_BINARY_DIR}/calceditlib)
+endif()
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -66,6 +67,7 @@ set_target_properties(calcedit PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+set(CPACK_GENERATOR "TGZ")
 include(GNUInstallDirs)
 install(TARGETS calcedit
     BUNDLE DESTINATION .
@@ -76,3 +78,13 @@ install(TARGETS calcedit
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(calcedit)
 endif()
+
+qt_generate_deploy_app_script(
+    TARGET calcedit
+    OUTPUT_SCRIPT calcedit_deploy_script
+    NO_UNSUPPORTED_PLATFORM_ERROR
+)
+install(
+    SCRIPT ${calcedit_deploy_script}
+)
+include(CPack)
