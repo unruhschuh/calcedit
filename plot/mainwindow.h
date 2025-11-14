@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <qcustomplot.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -29,5 +30,6 @@ class MainWindow : public QMainWindow
 
   private:
     QTimer m_recalcTimer;
+    QCPTextElement * m_title;
 };
 #endif // MAINWINDOW_H

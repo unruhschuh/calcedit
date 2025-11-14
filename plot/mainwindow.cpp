@@ -3,6 +3,7 @@
 #include "savewavdialog.h"
 
 #include <QScrollBar>
+#include <QMessageBox>
 
 #define exprtk_disable_caseinsensitivity
 #include "exprtk.hpp"
@@ -20,6 +21,26 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->widget->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(startCalculationTimer()));
 
   connect(ui->actionSave_WAV, &QAction::triggered, this, &MainWindow::saveWav);
+  connect(ui->actionSave_Pdf, &QAction::triggered, [this](){
+    auto fileName = QFileDialog::getSaveFileName(this);
+    if (!fileName.isEmpty())
+    {
+      if (!ui->widget->savePdf(fileName))
+      {
+        QMessageBox::critical(this, "Error", "Failed to save PDF");
+      }
+    }
+  });
+  connect(ui->actionSave_Png, &QAction::triggered, [this](){
+    auto fileName = QFileDialog::getSaveFileName(this);
+    if (!fileName.isEmpty())
+    {
+      if (!ui->widget->savePng(fileName))
+      {
+        QMessageBox::critical(this, "Error", "Failed to save PNG");
+      }
+    }
+  });
 
   connect(&m_recalcTimer, &QTimer::timeout, this, &MainWindow::updateCalculation);
 
@@ -32,9 +53,18 @@ MainWindow::MainWindow(QWidget *parent)
   ui->widget->setNoAntialiasingOnDrag(true);
 
   m_recalcTimer.setSingleShot(true);
+  m_title = new QCPTextElement(ui->widget, "", QFont("sans", 12, QFont::Bold));
+  ui->widget->plotLayout()->insertRow(0);
+  ui->widget->plotLayout()->addElement(0, 0, m_title);
 
   ui->plainTextEdit->setPlainText(
     "// Comments start with // or #\n"
+    "// Set title and labels\n"
+    "\n"
+    "title := 'Example';\n"
+    "label_x := 'time';\n"
+    "label_y := 'amplitude';\n"
+    "\n"
     "// Use built in functions like sin(), cos(), etc.\n"
     "// Any variable a value is asigned to via := ends up in the graph. Variable names are case-sensitive.\n"
     "\n"
@@ -141,6 +171,9 @@ struct Parser
   {
     symbol_table.add_variable("x", x);
     symbol_table.add_constants();
+    symbol_table.add_stringvar("title", title);
+    symbol_table.add_stringvar("label_x", label_x);
+    symbol_table.add_stringvar("label_y", label_y);
 
     expression.register_symbol_table(unknown_var_symbol_table);
     expression.register_symbol_table(symbol_table);
@@ -155,6 +188,9 @@ struct Parser
     parser_t parser;
     std::vector<std::string> variable_list;
     my_usr<double> usr{variable_list};
+    std::string title;
+    std::string label_x;
+    std::string label_y;
 };
 
 void MainWindow::updateCalculation()
@@ -229,6 +265,13 @@ void MainWindow::updateCalculation()
 
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
+    if (!parser.label_x.empty()) {
+      customPlot->xAxis->setLabel(parser.label_x.c_str());
+    }
+    if (!parser.label_y.empty()) {
+      customPlot->yAxis->setLabel(parser.label_y.c_str());
+    }
+    m_title->setText(parser.title.c_str());
     customPlot->legend->setVisible(true);
     customPlot->replot();
     statusBar()->clearMessage();

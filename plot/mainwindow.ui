@@ -47,6 +47,8 @@
      <string>&amp;File</string>
     </property>
     <addaction name="actionSave_WAV"/>
+    <addaction name="actionSave_Pdf"/>
+    <addaction name="actionSave_Png"/>
    </widget>
    <addaction name="menu_File"/>
   </widget>
@@ -97,6 +99,16 @@
   <action name="actionSave_WAV">
    <property name="text">
     <string>Save &amp;WAV</string>
+   </property>
+  </action>
+  <action name="actionSave_Pdf">
+   <property name="text">
+    <string>Save &amp;Pdf</string>
+   </property>
+  </action>
+  <action name="actionSave_Png">
+   <property name="text">
+    <string>Save P&amp;ng</string>
    </property>
   </action>
  </widget>
