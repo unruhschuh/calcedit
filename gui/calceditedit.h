@@ -2,6 +2,7 @@
 #define CALCEDITEDIT_H
 
 #include <QTextEdit>
+#include <QTimer>
 
 class CalcEditEdit : public QTextEdit
 {
@@ -21,6 +22,9 @@ class CalcEditEdit : public QTextEdit
 
   signals:
     void currentResult(QString result);
+
+  private:
+    QTimer m_reformatTimer;
 };
 
 #endif // CALCEDITEDIT_H

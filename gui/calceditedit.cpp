@@ -6,6 +6,7 @@
 #include <QClipboard>
 #include <QApplication>
 #include <QScrollBar>
+#include <QSignalBlocker>
 
 //CalcEditEdit::CalcEditEdit()
 //{
@@ -16,22 +17,45 @@ CalcEditEdit::CalcEditEdit(QWidget *parent)
   : QTextEdit(parent)
 {
   connect(this, &CalcEditEdit::textChanged, [this](){
+  });
+  m_reformatTimer.start(1000);
+  connect(&m_reformatTimer, &QTimer::timeout, [this](){
+    //bool wasBlocked = blockSignals(true);
+    const QSignalBlocker blocker{this->document()};
     bool mlBlock = false;
     for (auto block = document()->begin(); block != document()->end(); block = block.next())
     {
-      if (block.text().startsWith("///") || block.text().startsWith("##"))
+      if (block.isValid())
       {
-        mlBlock = true;
+        qDebug() << block.blockNumber();
+        if (block.text().startsWith("///") || block.text().startsWith("##"))
+        {
+          mlBlock = true;
+        }
+        QTextCursor cursor(block);
+        auto blockFormat = block.blockFormat();
+        if (!mlBlock && block.blockNumber() < m_results.size() && !m_results[block.blockNumber()].empty() )
+        {
+          blockFormat.setBottomMargin(20);
+        }
+        else
+        {
+          blockFormat.setBottomMargin(0);
+        }
+        cursor.setBlockFormat(blockFormat);
+
+        if (block.next().text().isEmpty())
+        {
+          mlBlock = false;
+        }
       }
-      if (!mlBlock)
+      else
       {
-        block.blockFormat().setLineHeight(100,QTextBlockFormat::LineDistanceHeight);
-      }
-      if (block.next().text().isEmpty())
-      {
-        mlBlock = false;
+        qDebug() << "invalid block";
       }
     }
+    //blockSignals(wasBlocked);
+    update();
   });
 }
 
@@ -39,11 +63,14 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
 {
   QPainter painter(viewport());
 
+  {
+  }
+
 #if 0
   // Determine space needed for results
   auto fontMetrics = painter.fontMetrics();
   int resultWidth = 0;
-  for (QTextBlock block = firstVisibleBlock(); block.isValid(); block = block.next())
+  for (QTextBlock block = document()->begin(); block.isValid(); block = block.next())
   {
     auto blockNumber = block.blockNumber();
     if (blockNumber < m_results.size() && ! m_results[blockNumber].empty())
@@ -96,13 +123,12 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
     //qDebug() << "updateEvent";
     //QTextBlock block = firstVisibleBlock();
     QTextBlock block = document()->firstBlock();
-    int blockNumber = block.blockNumber();
     //int top = qRound(blockBoundingGeometry(block).translated(contentOffset()).top());
     //int bottom = top + qRound(blockBoundingRect(block).height());
-    int top = getBoundingRect(block).y();
-    int bottom = top + getBoundingRect(block).height();
-    while (block.isValid() && top <= event->rect().bottom()) {
-      if (block.isVisible() && bottom >= event->rect().top()) {
+    while (block.isValid()) {
+      int blockNumber = block.blockNumber();
+      int top = getBoundingRect(block).y();
+      if (block.isVisible()) {
         auto line = block.layout()->lineAt(block.layout()->lineCount()-1);
         auto x = line.naturalTextWidth() + 5;
         QString number = QString::number(blockNumber + 1);
@@ -110,15 +136,11 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
         if (blockNumber < m_results.size() && ! m_results[blockNumber].empty())
         {
           std::string result = " = " + m_results[blockNumber];
-          painter.drawText(x, top, line.width(), painter.fontMetrics().height(), Qt::AlignLeft, result.c_str());
+          //painter.drawText(x, top, line.width(), painter.fontMetrics().height(), Qt::AlignLeft, result.c_str());
+          painter.drawText(0, getBoundingRect(block).y() + getBoundingRect(block).height(), line.width(), painter.fontMetrics().height(), Qt::AlignLeft, result.c_str());
         }
       }
-
       block = block.next();
-      top = bottom;
-      //bottom = top + qRound(blockBoundingRect(block).height());
-      bottom = top + qRound(getBoundingRect(block).height());
-      ++blockNumber;
     }
   }
 #endif
@@ -147,6 +169,10 @@ void CalcEditEdit::keyPressEvent(QKeyEvent *event)
   if (line < m_results.size())
   {
     emit currentResult(m_results[line].c_str());
+  }
+
+  if (1)
+  {
   }
 }
 
