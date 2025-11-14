@@ -66,6 +66,13 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
         if (blockNumber < m_results.size() && ! m_results[blockNumber].empty())
         {
           std::string result = " = " + m_results[blockNumber];
+          if (block.next().text().trimmed().isEmpty() &&
+              block != document()->lastBlock() &&
+              block.next() != textCursor().block())
+          {
+            x = 0;
+            top = bottom;
+          }
           painter.drawText(x, top, line.width(), fontMetrics().height(), Qt::AlignLeft, result.c_str());
         }
       }
@@ -103,6 +110,7 @@ void CalcEditEdit::keyPressEvent(QKeyEvent *event)
   {
     emit currentResult(m_results[line].c_str());
   }
+  viewport()->update();
 }
 
 void CalcEditEdit::setResults(std::vector<std::string> results)
