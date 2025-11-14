@@ -199,6 +199,30 @@ struct imag final : public exprtk::ifunction<T>
   }
 };
 
+template <typename T>
+struct conj final : public exprtk::ifunction<T>
+{
+  conj() : exprtk::ifunction<T>(1)
+  {}
+
+  T operator()(const T& v) override
+  {
+    return v.conj();
+  }
+};
+
+template <typename T>
+struct arg final : public exprtk::ifunction<T>
+{
+  arg() : exprtk::ifunction<T>(1)
+  {}
+
+  T operator()(const T& v) override
+  {
+    return v.arg();
+  }
+};
+
 void calculate(
     const std::string & input,
     std::map<std::string, cmplx::complex_t> & variables,
@@ -237,8 +261,12 @@ void calculate(
       symbol_table.add_variable("pi", variables["pi"], true);
       real<cmplx::complex_t> real_fun;
       imag<cmplx::complex_t> imag_fun;
+      conj<cmplx::complex_t> conj_fun;
+      arg<cmplx::complex_t> arg_fun;
       symbol_table.add_function("real", real_fun);
       symbol_table.add_function("imag", imag_fun);
+      symbol_table.add_function("conj", conj_fun);
+      symbol_table.add_function("arg", arg_fun);
       //symbol_table.add_constants();
       for (auto & v : variables)
       {

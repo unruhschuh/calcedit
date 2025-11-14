@@ -58,17 +58,25 @@ namespace cmplx
       }
 
       complex_t& operator=(const SCALAR &d) {
-        c_ = d;
-        sanitize_negative_zero();
-        return *this;
+         c_ = d;
+         sanitize_negative_zero();
+         return *this;
       }
 
       SCALAR real() const {
-        return c_.real();
+         return c_.real();
       }
 
       SCALAR imag() const {
-        return c_.imag();
+         return c_.imag();
+      }
+
+      complex_t conj() const {
+         return complex_t(c_.real(), -c_.imag());
+      }
+
+      complex_t arg() const {
+         return complex_t(std::arg(c_));
       }
 
       template <typename T>
@@ -238,7 +246,7 @@ namespace cmplx
 
    inline complex_t modulus(const complex_t v0, const complex_t v1) { return complex_t(fmod(v0.c_.real() , v1.c_.real()),0); }
    inline complex_t     pow(const complex_t v0, const complex_t v1) {
-      if (v0.imag() == 0 && v1.imag() == 0.0) // && v1.real() > 0 && frac(v1).real() == 0)
+      if (v0.imag() == 0.0L && v1.imag() == 0.0L) // && v1.real() > 0 && frac(v1).real() == 0)
       {
          return complex_t(std::pow(v0.c_.real(), v1.c_.real()), 0);
       }

@@ -50,12 +50,10 @@ MainWindow::MainWindow(QWidget *parent)
     "}; \n"
     "\n"
     "// complex numbers\n"
-    "sqrt(pi+i)\n"
-    "cos(ans)\n"
-    "z:=ans/abs(ans)\n"
-    "abs(ans)\n"
-    "real(z)\n"
-    "imag(z)\n"
+    "x := sqrt(sqrt(1/2)+i*sqrt(1/2))\n"
+    "sqrt(x*conj(x))                 \n"
+    "abs(x)                          \n"
+    "sqrt(real(x)^2+imag(x)^2)       \n"
   );
 }
 
