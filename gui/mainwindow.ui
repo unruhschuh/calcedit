@@ -29,6 +29,12 @@
         <bold>true</bold>
        </font>
       </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QTextEdit {background-color: #ffffff;}</string>
+      </property>
      </widget>
     </item>
    </layout>
@@ -113,7 +119,7 @@
  <customwidgets>
   <customwidget>
    <class>CalcEditEdit</class>
-   <extends>QPlainTextEdit</extends>
+   <extends>QTextEdit</extends>
    <header>calceditedit.h</header>
   </customwidget>
  </customwidgets>

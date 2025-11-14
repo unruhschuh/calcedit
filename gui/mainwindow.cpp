@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
   ui->setupUi(this);
 
-  connect(ui->input, &QPlainTextEdit::textChanged, this, &MainWindow::updateCalculation);
+  connect(ui->input, &QTextEdit::textChanged, this, &MainWindow::updateCalculation);
   connect(ui->action_Variables, &QAction::triggered, [this](){ ui->dockWidget->show(); });
   connect(ui->input, &CalcEditEdit::currentResult, [this](QString s){ statusBar()->showMessage(s); });
 

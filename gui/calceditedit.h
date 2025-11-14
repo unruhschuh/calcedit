@@ -1,9 +1,9 @@
 #ifndef CALCEDITEDIT_H
 #define CALCEDITEDIT_H
 
-#include <QPlainTextEdit>
+#include <QTextEdit>
 
-class CalcEditEdit : public QPlainTextEdit
+class CalcEditEdit : public QTextEdit
 {
     Q_OBJECT
   public:

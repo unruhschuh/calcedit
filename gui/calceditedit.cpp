@@ -5,6 +5,7 @@
 #include <QTextBlock>
 #include <QClipboard>
 #include <QApplication>
+#include <QScrollBar>
 
 //CalcEditEdit::CalcEditEdit()
 //{
@@ -12,21 +13,57 @@
 //}
 
 CalcEditEdit::CalcEditEdit(QWidget *parent)
-  : QPlainTextEdit(parent)
+  : QTextEdit(parent)
 {
+  connect(this, &CalcEditEdit::textChanged, [this](){
+    bool mlBlock = false;
+    for (auto block = document()->begin(); block != document()->end(); block = block.next())
+    {
+      if (block.text().startsWith("///") || block.text().startsWith("##"))
+      {
+        mlBlock = true;
+      }
+      if (!mlBlock)
+      {
+        block.blockFormat().setLineHeight(100,QTextBlockFormat::LineDistanceHeight);
+      }
+      if (block.next().text().isEmpty())
+      {
+        mlBlock = false;
+      }
+    }
+  });
 }
 
 void CalcEditEdit::paintEvent(QPaintEvent *event)
 {
   QPainter painter(viewport());
 
-  //QRect r = this->geometry();
-  //r.setTopLeft(QPoint(0,0));
-  //QBrush b;
-  //b.setColor(QColor(255,255,255));
-  //painter.fillRect(r, b);
+#if 0
+  // Determine space needed for results
+  auto fontMetrics = painter.fontMetrics();
+  int resultWidth = 0;
+  for (QTextBlock block = firstVisibleBlock(); block.isValid(); block = block.next())
+  {
+    auto blockNumber = block.blockNumber();
+    if (blockNumber < m_results.size() && ! m_results[blockNumber].empty())
+    {
+      std::string result = m_results[blockNumber] + " = ";
+      QRect actualRect;
+      auto width = fontMetrics.horizontalAdvance(result.c_str());
+      if (width > resultWidth) resultWidth = width;
+    }
+  }
+  setViewportMargins(resultWidth,0,0,0);
+#endif
 
-  //auto block = firstVisibleBlock();
+  auto getBoundingRect = [this](const QTextBlock & block) {
+      if (!block.isValid()) return QRectF();
+      auto r = block.layout()->boundingRect();
+      r.translate(block.layout()->position());
+      r.translate(0, -verticalScrollBar()->value());
+      return r;
+  };
 
   bool mlBlock = false;
   for (auto block = document()->begin(); block != document()->end(); block = block.next())
@@ -38,7 +75,10 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
 
     if (mlBlock)
     {
-      auto r = blockBoundingGeometry(block).translated(contentOffset());
+      //auto r = block.layout()->boundingRect();
+      //r.translate(block.layout()->position());
+      //r.translate(0, -verticalScrollBar()->value());
+      auto r = getBoundingRect(block);
       QBrush b;
       b.setColor(QColor(220,220,220));
       b.setStyle(Qt::BrushStyle::SolidPattern);
@@ -51,12 +91,16 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
     }
   }
 
+#if 1
   {
     //qDebug() << "updateEvent";
-    QTextBlock block = firstVisibleBlock();
+    //QTextBlock block = firstVisibleBlock();
+    QTextBlock block = document()->firstBlock();
     int blockNumber = block.blockNumber();
-    int top = qRound(blockBoundingGeometry(block).translated(contentOffset()).top());
-    int bottom = top + qRound(blockBoundingRect(block).height());
+    //int top = qRound(blockBoundingGeometry(block).translated(contentOffset()).top());
+    //int bottom = top + qRound(blockBoundingRect(block).height());
+    int top = getBoundingRect(block).y();
+    int bottom = top + getBoundingRect(block).height();
     while (block.isValid() && top <= event->rect().bottom()) {
       if (block.isVisible() && bottom >= event->rect().top()) {
         auto line = block.layout()->lineAt(block.layout()->lineCount()-1);
@@ -66,19 +110,20 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
         if (blockNumber < m_results.size() && ! m_results[blockNumber].empty())
         {
           std::string result = " = " + m_results[blockNumber];
-          painter.drawText(x, top, line.width(), fontMetrics().height(), Qt::AlignLeft, result.c_str());
+          painter.drawText(x, top, line.width(), painter.fontMetrics().height(), Qt::AlignLeft, result.c_str());
         }
       }
 
       block = block.next();
       top = bottom;
-      bottom = top + qRound(blockBoundingRect(block).height());
+      //bottom = top + qRound(blockBoundingRect(block).height());
+      bottom = top + qRound(getBoundingRect(block).height());
       ++blockNumber;
     }
   }
+#endif
 
-
-  QPlainTextEdit::paintEvent(event);
+  QTextEdit::paintEvent(event);
 }
 
 void CalcEditEdit::keyPressEvent(QKeyEvent *event)
@@ -95,9 +140,9 @@ void CalcEditEdit::keyPressEvent(QKeyEvent *event)
   }
   else
   {
-    QPlainTextEdit::keyPressEvent(event);
+    QTextEdit::keyPressEvent(event);
   }
-  // The line might change during QPlainTextEdit::keyPressEvent so we need to do this afterwards
+  // The line might change during QTextEdit::keyPressEvent so we need to do this afterwards
   line = textCursor().blockNumber();
   if (line < m_results.size())
   {
