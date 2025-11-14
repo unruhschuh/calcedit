@@ -23,8 +23,11 @@ CalcEditEdit::CalcEditEdit(QWidget *parent)
     //bool wasBlocked = blockSignals(true);
     const QSignalBlocker blocker{this->document()};
     bool mlBlock = false;
-    for (auto block = document()->begin(); block != document()->end(); block = block.next())
+    QTextCursor cursor(document());
+    cursor.joinPreviousEditBlock();
+    do
     {
+      QTextBlock block = cursor.block();
       if (block.isValid())
       {
         qDebug() << block.blockNumber();
@@ -32,7 +35,6 @@ CalcEditEdit::CalcEditEdit(QWidget *parent)
         {
           mlBlock = true;
         }
-        QTextCursor cursor(block);
         auto blockFormat = block.blockFormat();
         if (!mlBlock && block.blockNumber() < m_results.size() && !m_results[block.blockNumber()].empty() )
         {
@@ -53,7 +55,9 @@ CalcEditEdit::CalcEditEdit(QWidget *parent)
       {
         qDebug() << "invalid block";
       }
-    }
+      cursor.movePosition(QTextCursor::MoveOperation::NextBlock);
+    } while(cursor.block() != document()->lastBlock());
+    cursor.endEditBlock();
     //blockSignals(wasBlocked);
     update();
   });
