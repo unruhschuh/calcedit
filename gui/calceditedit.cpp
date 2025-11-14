@@ -66,14 +66,17 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
         if (blockNumber < m_results.size() && ! m_results[blockNumber].empty())
         {
           std::string result = " = " + m_results[blockNumber];
+          auto textRect = fontMetrics().boundingRect(result.c_str());
           if (block.next().text().trimmed().isEmpty() &&
-              block != document()->lastBlock() &&
-              block.next() != textCursor().block())
+              block.next() != textCursor().block() &&
+              textRect.width() + x > line.width()
+              )
           {
-            x = 0;
+            x = line.width() - textRect.width();
             top = bottom;
           }
-          painter.drawText(x, top, line.width(), fontMetrics().height(), Qt::AlignLeft, result.c_str());
+          //painter.drawText(x, top, line.width(), fontMetrics().height(), Qt::AlignLeft, result.c_str());
+          painter.drawText(x, top, textRect.width(), fontMetrics().height(), Qt::AlignLeft, result.c_str());
         }
       }
 
