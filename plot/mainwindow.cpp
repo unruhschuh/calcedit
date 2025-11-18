@@ -61,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent)
     "// Comments start with // or #\n"
     "// Set title and labels\n"
     "\n"
-    "title := 'Example';\n"
+    "title('Example');\n"
     "label_x := 'time';\n"
     "label_y := 'amplitude';\n"
     "\n"
@@ -167,20 +167,50 @@ std::vector<std::string> & m_variable_list;
 
 struct Parser
 {
-  Parser()
-  {
-    symbol_table.add_variable("x", x);
-    symbol_table.add_constants();
-    symbol_table.add_stringvar("title", title);
-    symbol_table.add_stringvar("label_x", label_x);
-    symbol_table.add_stringvar("label_y", label_y);
+    template <typename T>
+    struct Title final : public exprtk::igeneric_function<T>
+    {
+        typedef exprtk::igeneric_function<T> igenfunct_t;
+        typedef typename igenfunct_t::generic_type generic_t;
+        typedef typename igenfunct_t::parameter_list_t parameter_list_t;
+        typedef typename generic_t::string_view string_t;
 
-    expression.register_symbol_table(unknown_var_symbol_table);
-    expression.register_symbol_table(symbol_table);
+        Title(std::string & title)
+                : m_title(title), exprtk::igeneric_function<T>("S")
+        {}
 
-    parser.enable_unknown_symbol_resolver(usr);
-    parser.settings().disable_commutative_check();
-  };
+        inline T operator()(parameter_list_t parameters) override
+        {
+          if (parameters.size())
+          {
+            exprtk::type_store<T> & arg = parameters[0];
+            string_t tmp(parameters[0]);
+            m_title.clear();
+            for (int i = 0; i < tmp.size(); i++)
+            {
+              m_title += tmp[i];
+            }
+          }
+          return 0;
+        }
+
+        std::string & m_title;
+    };
+
+    Parser()
+    {
+      symbol_table.add_variable("x", x);
+      symbol_table.add_constants();
+      symbol_table.add_stringvar("label_x", label_x);
+      symbol_table.add_stringvar("label_y", label_y);
+      symbol_table.add_function("title", title_fun);
+
+                      expression.register_symbol_table(unknown_var_symbol_table);
+      expression.register_symbol_table(symbol_table);
+
+      parser.enable_unknown_symbol_resolver(usr);
+      parser.settings().disable_commutative_check();
+    };
     double x;
     symbol_table_t unknown_var_symbol_table;
     symbol_table_t symbol_table;
@@ -189,6 +219,7 @@ struct Parser
     std::vector<std::string> variable_list;
     my_usr<double> usr{variable_list};
     std::string title;
+    Title<double> title_fun{title};
     std::string label_x;
     std::string label_y;
 };
