@@ -93,8 +93,9 @@ MainWindow::MainWindow(QWidget *parent)
     "  Sin := inf;\n"
     "  Rect := inf;\n"
     "};\n"
-    "xLim(0,3);\n"
+    "xLim(0,3*pi);\n"
     "yLim(-3.5,3.5);\n"
+    "xAxisPi(1);\n"
   );
 }
 
@@ -272,6 +273,7 @@ struct Parser
       symbol_table.add_function("yAxis", yAxis_fun);
       symbol_table.add_function("xLog", xLog_fun);
       symbol_table.add_function("yLog", yLog_fun);
+      symbol_table.add_function("xAxisPi", xAxisPi_fun);
 
       expression.register_symbol_table(unknown_var_symbol_table);
       expression.register_symbol_table(symbol_table);
@@ -312,6 +314,8 @@ struct Parser
     Bool<double> xLog_fun{xLog};
     std::optional<bool> yLog;
     Bool<double> yLog_fun{yLog};
+    std::optional<bool> xAxisPi;
+    Bool<double> xAxisPi_fun{xAxisPi};
 };
 
 void MainWindow::updateCalculation()
@@ -429,6 +433,11 @@ void MainWindow::updateCalculation()
     };
     setAxisLog(customPlot->xAxis, parser.xLog);
     setAxisLog(customPlot->yAxis, parser.yLog);
+    if (parser.xAxisPi.has_value() && parser.xAxisPi.value())
+    {
+      QSharedPointer<QCPAxisTickerPi> piTicker(new QCPAxisTickerPi);
+      customPlot->xAxis->setTicker(piTicker);
+    }
     if (parser.axisRatio.has_value())
     {
       customPlot->yAxis->setScaleRatio(customPlot->xAxis, parser.axisRatio.value());
