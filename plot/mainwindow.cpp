@@ -93,7 +93,8 @@ MainWindow::MainWindow(QWidget *parent)
     "  Sin := inf;\n"
     "  Rect := inf;\n"
     "};\n"
-
+    "xlim(0,3);\n"
+    "ylim(-3.5,3.5);\n"
   );
 }
 
@@ -196,6 +197,19 @@ struct Parser
 
         std::string & m_title;
     };
+    template <typename T>
+    struct Lim final : public exprtk::ifunction<T>
+    {
+        Lim(std::optional<std::pair<T,T>> & limits) : m_limits{limits}, exprtk::ifunction<T>(2)
+        {}
+
+        T operator()(const T& v1, const T& v2) override
+        {
+          m_limits = {v1, v2};
+          return v2 - v1;
+        }
+        std::optional<std::pair<T,T>> &m_limits;
+    };
 
     Parser()
     {
@@ -204,8 +218,12 @@ struct Parser
       symbol_table.add_stringvar("label_x", label_x);
       symbol_table.add_stringvar("label_y", label_y);
       symbol_table.add_function("title", title_fun);
+      symbol_table.add_function("xlim", xlim_fun);
+      symbol_table.add_function("ylim", ylim_fun);
+      symbol_table.add_function("xlim2", xlim2_fun);
+      symbol_table.add_function("ylim2", ylim2_fun);
 
-                      expression.register_symbol_table(unknown_var_symbol_table);
+      expression.register_symbol_table(unknown_var_symbol_table);
       expression.register_symbol_table(symbol_table);
 
       parser.enable_unknown_symbol_resolver(usr);
@@ -220,6 +238,14 @@ struct Parser
     my_usr<double> usr{variable_list};
     std::string title;
     Title<double> title_fun{title};
+    std::optional<std::pair<double,double>> xlim;
+    Lim<double> xlim_fun{xlim};
+    std::optional<std::pair<double,double>> ylim;
+    Lim<double> ylim_fun{ylim};
+    std::optional<std::pair<double,double>> xlim2;
+    Lim<double> xlim2_fun{xlim2};
+    std::optional<std::pair<double,double>> ylim2;
+    Lim<double> ylim2_fun{ylim2};
     std::string label_x;
     std::string label_y;
 };
@@ -296,6 +322,16 @@ void MainWindow::updateCalculation()
 
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
+    auto setLimits = [this](QCPAxis * axis, std::optional<std::pair<double,double>> limits) {
+      if (limits.has_value())
+      {
+        axis->setRange(limits.value().first, limits.value().second);
+      }
+    };
+    setLimits(customPlot->xAxis, parser.xlim);
+    setLimits(customPlot->yAxis, parser.ylim);
+    setLimits(customPlot->xAxis2, parser.xlim2);
+    setLimits(customPlot->yAxis2, parser.ylim2);
     if (!parser.label_x.empty()) {
       customPlot->xAxis->setLabel(parser.label_x.c_str());
     }
