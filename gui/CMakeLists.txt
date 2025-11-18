@@ -78,6 +78,12 @@ install(TARGETS calcedit
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+if (LINUX)
+  install(PROGRAMS ../run.sh
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      RENAME calcedit.sh
+  )
+endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(calcedit)
