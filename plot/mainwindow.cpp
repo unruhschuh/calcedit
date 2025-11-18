@@ -93,8 +93,8 @@ MainWindow::MainWindow(QWidget *parent)
     "  Sin := inf;\n"
     "  Rect := inf;\n"
     "};\n"
-    "xlim(0,3);\n"
-    "ylim(-3.5,3.5);\n"
+    "xLim(0,3);\n"
+    "yLim(-3.5,3.5);\n"
   );
 }
 
@@ -212,6 +212,20 @@ struct Parser
     };
 
     template <typename T>
+    struct Bool final : public exprtk::ifunction<T>
+    {
+        Bool(std::optional<bool> & value) : m_value{value}, exprtk::ifunction<T>(1)
+        {}
+
+        T operator()(const T& v1) override
+        {
+          m_value = v1;
+          return 0;
+        }
+        std::optional<bool> & m_value;
+    };
+
+    template <typename T>
     struct Double final : public exprtk::ifunction<T>
     {
         Double(std::optional<double> & value) : m_value{value}, exprtk::ifunction<T>(1)
@@ -248,14 +262,16 @@ struct Parser
       symbol_table.add_function("title", title_fun);
       symbol_table.add_function("labelX", labelX_fun);
       symbol_table.add_function("labelY", labelY_fun);
-      symbol_table.add_function("xlim", xlim_fun);
-      symbol_table.add_function("ylim", ylim_fun);
-      symbol_table.add_function("xlim2", xlim2_fun);
-      symbol_table.add_function("ylim2", ylim2_fun);
+      symbol_table.add_function("xLim", xlim_fun);
+      symbol_table.add_function("yLim", ylim_fun);
+      symbol_table.add_function("xLim2", xlim2_fun);
+      symbol_table.add_function("yLim2", ylim2_fun);
       symbol_table.add_function("axisRatio", axisRatio_fun);
       symbol_table.add_function("axisRatio2", axisRatio2_fun);
       symbol_table.add_function("xAxis", xAxis_fun);
       symbol_table.add_function("yAxis", yAxis_fun);
+      symbol_table.add_function("xLog", xLog_fun);
+      symbol_table.add_function("yLog", yLog_fun);
 
       expression.register_symbol_table(unknown_var_symbol_table);
       expression.register_symbol_table(symbol_table);
@@ -292,6 +308,10 @@ struct Parser
     Double<double> xAxis_fun{xAxis};
     std::optional<double> yAxis;
     Double<double> yAxis_fun{yAxis};
+    std::optional<bool> xLog;
+    Bool<double> xLog_fun{xLog};
+    std::optional<bool> yLog;
+    Bool<double> yLog_fun{yLog};
 };
 
 void MainWindow::updateCalculation()
@@ -302,15 +322,19 @@ void MainWindow::updateCalculation()
 
   //bool found = false;
   //auto range = ui->widget->graph()->getValueRange(found);
-  auto range = ui->widget->xAxis->range();
-  {
-    auto rangeWidth = range.upper - range.lower;
-    range.lower -= rangeWidth;
-    range.upper += rangeWidth;
-  }
 
   if (parser.parser.compile(parser_input, parser.expression))
   {
+    parser.expression.value(); // needs to run at least once, to make xLog etc. available.
+    auto range = ui->widget->xAxis->range();
+    {
+      auto rangeWidth = range.upper - range.lower;
+      if (! (parser.xLog.has_value() && parser.xLog.value()) )
+      {
+        range.lower -= rangeWidth;
+      }
+      range.upper += rangeWidth;
+    }
     auto customPlot = ui->widget;
     customPlot->clearGraphs();
 
@@ -338,10 +362,19 @@ void MainWindow::updateCalculation()
     {
       variables.push_back({"y", &expr_value, QVector<double>(N)});
     }
+    double logUpper = log10(range.upper);
+    double logLower = log10(range.lower);
 
     for (int i=0; i<N; ++i)
     {
-      X[i] = i * (range.upper - range.lower) / (double)(N-1) + range.lower;
+      if (parser.xLog.has_value() && parser.xLog.value())
+      {
+        X[i] = pow(10.0, (logUpper - logLower) / (double)(N-1) * (double)i + logLower);
+      }
+      else
+      {
+        X[i] = i * (range.upper - range.lower) / (double)(N-1) + range.lower;
+      }
       parser.x = X[i];
       expr_value = parser.expression.value();
       for (auto &v : variables)
@@ -366,7 +399,7 @@ void MainWindow::updateCalculation()
 
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
-    auto setLimits = [this](QCPAxis * axis, std::optional<std::pair<double,double>> limits) {
+    auto setLimits = [this](QCPAxis * axis, std::optional<std::pair<double,double>> & limits) {
       if (limits.has_value())
       {
         axis->setRange(limits.value().first, limits.value().second);
@@ -376,6 +409,26 @@ void MainWindow::updateCalculation()
     setLimits(customPlot->yAxis, parser.ylim);
     setLimits(customPlot->xAxis2, parser.xlim2);
     setLimits(customPlot->yAxis2, parser.ylim2);
+    auto setAxisLog = [this](QCPAxis * axis, std::optional<bool> & log) {
+      if (log.has_value() && log.value())
+      {
+        QSharedPointer<QCPAxisTickerLog> logTicker(new QCPAxisTickerLog);
+        axis->setScaleType(QCPAxis::stLogarithmic);
+        axis->setTicker(logTicker);
+        axis->setNumberFormat("eb"); // e = exponential, b = beautiful decimal powers
+        axis->setNumberPrecision(0); // makes sure "1*10^4" is displayed only as "10^4"
+      }
+      else
+      {
+        QSharedPointer<QCPAxisTicker> linTicker(new QCPAxisTicker);
+        axis->setScaleType(QCPAxis::stLinear);
+        axis->setTicker(linTicker);
+        axis->setNumberFormat("gb");
+        axis->setNumberPrecision(6);
+      }
+    };
+    setAxisLog(customPlot->xAxis, parser.xLog);
+    setAxisLog(customPlot->yAxis, parser.yLog);
     if (parser.axisRatio.has_value())
     {
       customPlot->yAxis->setScaleRatio(customPlot->xAxis, parser.axisRatio.value());
