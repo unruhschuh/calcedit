@@ -211,6 +211,36 @@ struct Parser
         std::optional<std::pair<T,T>> &m_limits;
     };
 
+    template <typename T>
+    struct Double final : public exprtk::ifunction<T>
+    {
+        Double(std::optional<double> & value) : m_value{value}, exprtk::ifunction<T>(1)
+        {}
+
+        T operator()(const T& v1) override
+        {
+          m_value = v1;
+          return 0;
+        }
+        std::optional<double> & m_value;
+    };
+
+#if 0
+    template <typename T>
+    struct Ratio final : public exprtk::ifunction<T>
+    {
+        Ratio(std::vector<std::tuple<double,double,double>> & ratios) : m_ratios{ratios}, exprtk::ifunction<T>(3)
+        {}
+
+        T operator()(const T& v1, const T& v2, const T& v3) override
+        {
+          m_ratios.push_back({v1,v2,v3});
+          return 0;
+        }
+        std::vector<std::tuple<double,double,double>> & m_ratios;
+    };
+#endif
+
     Parser()
     {
       symbol_table.add_variable("x", x);
@@ -222,6 +252,8 @@ struct Parser
       symbol_table.add_function("ylim", ylim_fun);
       symbol_table.add_function("xlim2", xlim2_fun);
       symbol_table.add_function("ylim2", ylim2_fun);
+      symbol_table.add_function("axisRatio", axisRatio_fun);
+      symbol_table.add_function("axisRatio2", axisRatio2_fun);
 
       expression.register_symbol_table(unknown_var_symbol_table);
       expression.register_symbol_table(symbol_table);
@@ -246,6 +278,10 @@ struct Parser
     Lim<double> xlim2_fun{xlim2};
     std::optional<std::pair<double,double>> ylim2;
     Lim<double> ylim2_fun{ylim2};
+    std::optional<double> axisRatio;
+    Double<double> axisRatio_fun{axisRatio};
+    std::optional<double> axisRatio2;
+    Double<double> axisRatio2_fun{axisRatio};
     std::string label_x;
     std::string label_y;
 };
@@ -332,6 +368,14 @@ void MainWindow::updateCalculation()
     setLimits(customPlot->yAxis, parser.ylim);
     setLimits(customPlot->xAxis2, parser.xlim2);
     setLimits(customPlot->yAxis2, parser.ylim2);
+    if (parser.axisRatio.has_value())
+    {
+      customPlot->yAxis->setScaleRatio(customPlot->xAxis, parser.axisRatio.value());
+    }
+    if (parser.axisRatio2.has_value() && parser.axisRatio2.value())
+    {
+      customPlot->yAxis2->setScaleRatio(customPlot->xAxis2, parser.axisRatio2.value());
+    }
     if (!parser.label_x.empty()) {
       customPlot->xAxis->setLabel(parser.label_x.c_str());
     }
