@@ -62,8 +62,8 @@ MainWindow::MainWindow(QWidget *parent)
     "// Set title and labels\n"
     "\n"
     "title('Example');\n"
-    "label_x := 'time';\n"
-    "label_y := 'amplitude';\n"
+    "labelX('time');\n"
+    "labelY('amplitude');\n"
     "\n"
     "// Use built in functions like sin(), cos(), etc.\n"
     "// Any variable a value is asigned to via := ends up in the graph. Variable names are case-sensitive.\n"
@@ -169,14 +169,14 @@ std::vector<std::string> & m_variable_list;
 struct Parser
 {
     template <typename T>
-    struct Title final : public exprtk::igeneric_function<T>
+    struct String final : public exprtk::igeneric_function<T>
     {
         typedef exprtk::igeneric_function<T> igenfunct_t;
         typedef typename igenfunct_t::generic_type generic_t;
         typedef typename igenfunct_t::parameter_list_t parameter_list_t;
         typedef typename generic_t::string_view string_t;
 
-        Title(std::string & title)
+        String(std::string & title)
                 : m_title(title), exprtk::igeneric_function<T>("S")
         {}
 
@@ -245,15 +245,17 @@ struct Parser
     {
       symbol_table.add_variable("x", x);
       symbol_table.add_constants();
-      symbol_table.add_stringvar("label_x", label_x);
-      symbol_table.add_stringvar("label_y", label_y);
       symbol_table.add_function("title", title_fun);
+      symbol_table.add_function("labelX", labelX_fun);
+      symbol_table.add_function("labelY", labelY_fun);
       symbol_table.add_function("xlim", xlim_fun);
       symbol_table.add_function("ylim", ylim_fun);
       symbol_table.add_function("xlim2", xlim2_fun);
       symbol_table.add_function("ylim2", ylim2_fun);
       symbol_table.add_function("axisRatio", axisRatio_fun);
       symbol_table.add_function("axisRatio2", axisRatio2_fun);
+      symbol_table.add_function("xAxis", xAxis_fun);
+      symbol_table.add_function("yAxis", yAxis_fun);
 
       expression.register_symbol_table(unknown_var_symbol_table);
       expression.register_symbol_table(symbol_table);
@@ -269,7 +271,11 @@ struct Parser
     std::vector<std::string> variable_list;
     my_usr<double> usr{variable_list};
     std::string title;
-    Title<double> title_fun{title};
+    String<double> title_fun{title};
+    std::string labelX;
+    String<double> labelX_fun{labelX};
+    std::string labelY;
+    String<double> labelY_fun{labelY};
     std::optional<std::pair<double,double>> xlim;
     Lim<double> xlim_fun{xlim};
     std::optional<std::pair<double,double>> ylim;
@@ -282,8 +288,10 @@ struct Parser
     Double<double> axisRatio_fun{axisRatio};
     std::optional<double> axisRatio2;
     Double<double> axisRatio2_fun{axisRatio};
-    std::string label_x;
-    std::string label_y;
+    std::optional<double> xAxis;
+    Double<double> xAxis_fun{xAxis};
+    std::optional<double> yAxis;
+    Double<double> yAxis_fun{yAxis};
 };
 
 void MainWindow::updateCalculation()
@@ -376,11 +384,11 @@ void MainWindow::updateCalculation()
     {
       customPlot->yAxis2->setScaleRatio(customPlot->xAxis2, parser.axisRatio2.value());
     }
-    if (!parser.label_x.empty()) {
-      customPlot->xAxis->setLabel(parser.label_x.c_str());
+    if (!parser.labelX.empty()) {
+      customPlot->xAxis->setLabel(parser.labelX.c_str());
     }
-    if (!parser.label_y.empty()) {
-      customPlot->yAxis->setLabel(parser.label_y.c_str());
+    if (!parser.labelY.empty()) {
+      customPlot->yAxis->setLabel(parser.labelY.c_str());
     }
     m_title->setText(parser.title.c_str());
     customPlot->legend->setVisible(true);
