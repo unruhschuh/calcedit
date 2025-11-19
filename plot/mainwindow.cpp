@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->widget->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(startCalculationTimer()));
   connect(ui->widget->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(startCalculationTimer()));
 
+  connect(ui->actionApply_limits_and_ratios, &QAction::triggered, this, &MainWindow::updateCalculation);
   connect(ui->actionSave_WAV, &QAction::triggered, this, &MainWindow::saveWav);
   connect(ui->actionSave_Pdf, &QAction::triggered, [this](){
     auto fileName = QFileDialog::getSaveFileName(this);
@@ -403,16 +404,27 @@ void MainWindow::updateCalculation()
 
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
-    auto setLimits = [this](QCPAxis * axis, std::optional<std::pair<double,double>> & limits) {
-      if (limits.has_value())
+    if (ui->actionApply_limits_and_ratios->isChecked())
+    {
+      auto setLimits = [this](QCPAxis * axis, std::optional<std::pair<double,double>> & limits) {
+        if (limits.has_value())
+        {
+          axis->setRange(limits.value().first, limits.value().second);
+        }
+      };
+      setLimits(customPlot->xAxis, parser.xlim);
+      setLimits(customPlot->yAxis, parser.ylim);
+      setLimits(customPlot->xAxis2, parser.xlim2);
+      setLimits(customPlot->yAxis2, parser.ylim2);
+      if (parser.axisRatio.has_value())
       {
-        axis->setRange(limits.value().first, limits.value().second);
+        customPlot->yAxis->setScaleRatio(customPlot->xAxis, parser.axisRatio.value());
       }
-    };
-    setLimits(customPlot->xAxis, parser.xlim);
-    setLimits(customPlot->yAxis, parser.ylim);
-    setLimits(customPlot->xAxis2, parser.xlim2);
-    setLimits(customPlot->yAxis2, parser.ylim2);
+      if (parser.axisRatio2.has_value() && parser.axisRatio2.value())
+      {
+        customPlot->yAxis2->setScaleRatio(customPlot->xAxis2, parser.axisRatio2.value());
+      }
+    }
     auto setAxisLog = [this](QCPAxis * axis, std::optional<bool> & log) {
       if (log.has_value() && log.value())
       {
@@ -437,14 +449,6 @@ void MainWindow::updateCalculation()
     {
       QSharedPointer<QCPAxisTickerPi> piTicker(new QCPAxisTickerPi);
       customPlot->xAxis->setTicker(piTicker);
-    }
-    if (parser.axisRatio.has_value())
-    {
-      customPlot->yAxis->setScaleRatio(customPlot->xAxis, parser.axisRatio.value());
-    }
-    if (parser.axisRatio2.has_value() && parser.axisRatio2.value())
-    {
-      customPlot->yAxis2->setScaleRatio(customPlot->xAxis2, parser.axisRatio2.value());
     }
     if (!parser.labelX.empty()) {
       customPlot->xAxis->setLabel(parser.labelX.c_str());
