@@ -8,6 +8,8 @@
 #define exprtk_disable_caseinsensitivity
 #include "exprtk.hpp"
 
+#include <regex>
+
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
@@ -45,8 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   connect(&m_recalcTimer, &QTimer::timeout, this, &MainWindow::updateCalculation);
 
-  ui->widget->setInteraction(QCP::iRangeDrag, true);
-  ui->widget->setInteraction(QCP::iRangeZoom, true);
+  ui->widget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom); // | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
   ui->widget->xAxis->setRange(-0.5, 3.5);
   ui->widget->yAxis->setRange(-3.5, 3.5);
 
@@ -262,8 +263,10 @@ struct Parser
       symbol_table.add_variable("x", x);
       symbol_table.add_constants();
       symbol_table.add_function("title", title_fun);
-      symbol_table.add_function("labelX", labelX_fun);
-      symbol_table.add_function("labelY", labelY_fun);
+      symbol_table.add_function("xLabel", labelX_fun);
+      symbol_table.add_function("yLabel", labelY_fun);
+      symbol_table.add_function("xLabel2", labelX2_fun);
+      symbol_table.add_function("yLabel2", labelY2_fun);
       symbol_table.add_function("xLim", xlim_fun);
       symbol_table.add_function("yLim", ylim_fun);
       symbol_table.add_function("xLim2", xlim2_fun);
@@ -295,6 +298,10 @@ struct Parser
     String<double> labelX_fun{labelX};
     std::string labelY;
     String<double> labelY_fun{labelY};
+    std::string labelX2;
+    String<double> labelX2_fun{labelX2};
+    std::string labelY2;
+    String<double> labelY2_fun{labelY2};
     std::optional<std::pair<double,double>> xlim;
     Lim<double> xlim_fun{xlim};
     std::optional<std::pair<double,double>> ylim;
@@ -318,6 +325,11 @@ struct Parser
     std::optional<bool> xAxisPi;
     Bool<double> xAxisPi_fun{xAxisPi};
 };
+
+static bool ends_with(const std::string& str, const std::string& suffix)
+{
+  return str.size() >= suffix.size() && str.compare(str.size()-suffix.size(), suffix.size(), suffix) == 0;
+}
 
 void MainWindow::updateCalculation()
 {
@@ -387,20 +399,40 @@ void MainWindow::updateCalculation()
         v.Y[i] = *(v.value);
       }
     }
+    bool showXAxis2 = false;
+    bool showYAxis2 = false;
     for (auto &v : variables)
     {
       // create graph and assign data to it:
-      customPlot->addGraph();
+      QCPAxis * xAxis = nullptr;
+      QCPAxis * yAxis = nullptr;
+      QString name = v.name.c_str();
+      if (std::regex_search(v.name, std::regex("__[12][12]$")))
+      {
+        name.chop(4);
+        if ('2' == v.name[v.name.length()-2])
+        {
+          xAxis = customPlot->xAxis2;
+          showXAxis2 = true;
+        }
+        if ('2' == v.name[v.name.length()-1])
+        {
+          yAxis = customPlot->yAxis2;
+          showYAxis2 = true;
+        }
+      }
+      name.replace("__", " ");
+      customPlot->addGraph(xAxis, yAxis);
       auto graphIndex = customPlot->graphCount()-1;
       auto graph = customPlot->graph(graphIndex);
       graph->setAntialiased(true);
       //graph->setData(X, Y[v.first]);
       graph->setData(X, v.Y);
-      QString name = v.name.c_str();
-      name.replace('_', ' ');
       graph->setName(name);
       graph->setPen(QPen(graphColors[graphIndex % graphColors.size()]));
     }
+    customPlot->xAxis2->setVisible(showXAxis2);
+    customPlot->yAxis2->setVisible(showYAxis2);
 
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
@@ -456,6 +488,12 @@ void MainWindow::updateCalculation()
     if (!parser.labelY.empty()) {
       customPlot->yAxis->setLabel(parser.labelY.c_str());
     }
+    if (!parser.labelX2.empty()) {
+      customPlot->xAxis2->setLabel(parser.labelX2.c_str());
+    }
+    if (!parser.labelY2.empty()) {
+      customPlot->yAxis2->setLabel(parser.labelY2.c_str());
+    }
     m_title->setText(parser.title.c_str());
     customPlot->legend->setVisible(true);
     customPlot->replot();
@@ -481,6 +519,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
   if (event->type() == QEvent::Wheel)
   {
+    if (QGuiApplication::keyboardModifiers() & Qt::AltModifier)
+    {
+      ui->widget->axisRect()->setRangeZoomAxes(ui->widget->xAxis2, ui->widget->yAxis2);
+    }
+    else
+    {
+      ui->widget->axisRect()->setRangeZoomAxes(ui->widget->xAxis, ui->widget->yAxis);
+    }
+
     if (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
     {
       ui->widget->axisRect()->setRangeZoom(Qt::Horizontal);
@@ -492,6 +539,17 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
     else
     {
       ui->widget->axisRect()->setRangeZoom(Qt::Vertical | Qt::Horizontal);
+    }
+  }
+  if (event->type() == QEvent::MouseButtonPress)
+  {
+    if (QGuiApplication::keyboardModifiers() & Qt::AltModifier)
+    {
+      ui->widget->axisRect()->setRangeDragAxes(ui->widget->xAxis2, ui->widget->yAxis2);
+    }
+    else
+    {
+      ui->widget->axisRect()->setRangeDragAxes(ui->widget->xAxis, ui->widget->yAxis);
     }
   }
   return QObject::eventFilter(obj, event);

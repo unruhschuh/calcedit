@@ -18663,7 +18663,7 @@ void QCPAxisRect::wheelEvent(QWheelEvent *event)
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
   const double delta = event->delta();
 #else
-  const double delta = event->angleDelta().y();
+  const double delta = event->angleDelta().y() ? event->angleDelta().y() : event->angleDelta().x();
 #endif
   
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
