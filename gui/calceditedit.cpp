@@ -40,7 +40,7 @@ void CalcEditEdit::paintEvent(QPaintEvent *event)
     {
       auto r = blockBoundingGeometry(block).translated(contentOffset());
       QBrush b;
-      b.setColor(QColor(220,220,220));
+      b.setColor(QColor(52,52,52));
       b.setStyle(Qt::BrushStyle::SolidPattern);
       painter.fillRect(r, b);
     }

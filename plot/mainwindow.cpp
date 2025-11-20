@@ -16,6 +16,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
   ui->setupUi(this);
 
+  m_highlighter = new QSourceHighlite::QSourceHighliter(ui->plainTextEdit->document());
+  m_highlighter->setCurrentLanguage(QSourceHighlite::QSourceHighliter::CodeC);
+  m_highlighter->setTheme(QSourceHighlite::QSourceHighliter::Themes::Monokai);
+
   connect(ui->plainTextEdit, &QPlainTextEdit::textChanged, this, &MainWindow::updateCalculation);
   //connect(ui->widget->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(updateCalculation()));
   //connect(ui->widget->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(updateCalculation()));
@@ -64,8 +68,8 @@ MainWindow::MainWindow(QWidget *parent)
     "// Set title and labels\n"
     "\n"
     "title('Example');\n"
-    "labelX('time');\n"
-    "labelY('amplitude');\n"
+    "xLabel('time');\n"
+    "yLabel('amplitude');\n"
     "\n"
     "// Use built in functions like sin(), cos(), etc.\n"
     "// Any variable a value is asigned to via := ends up in the graph. Variable names are case-sensitive.\n"

@@ -27,6 +27,12 @@ set(PROJECT_SOURCES
         savewavdialog.h
         savewavdialog.ui
         ../deps/exprtk/exprtk.hpp
+        ../deps/QSourceHighlite/qsourcehighliter.cpp
+        ../deps/QSourceHighlite/qsourcehighliter.h
+        ../deps/QSourceHighlite/qsourcehighliterthemes.cpp
+        ../deps/QSourceHighlite/qsourcehighliterthemes.h
+        ../deps/QSourceHighlite/languagedata.h
+        ../deps/QSourceHighlite/languagedata.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -54,7 +60,7 @@ endif()
 
 target_link_libraries(calcplot PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport)
 
-target_include_directories(calcplot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/../deps/exprtk")
+target_include_directories(calcplot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/../deps/exprtk" "${CMAKE_CURRENT_SOURCE_DIR}/../deps/QSourceHighlite/")
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

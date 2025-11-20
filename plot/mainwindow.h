@@ -5,6 +5,8 @@
 #include <QTimer>
 #include <qcustomplot.h>
 
+#include "qsourcehighliter.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -29,6 +31,7 @@ class MainWindow : public QMainWindow
     void saveWav();
 
   private:
+    QSourceHighlite::QSourceHighliter * m_highlighter;
     QTimer m_recalcTimer;
     QCPTextElement * m_title;
 };

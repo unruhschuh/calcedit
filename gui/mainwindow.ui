@@ -29,6 +29,9 @@
         <bold>true</bold>
        </font>
       </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
      </widget>
     </item>
    </layout>

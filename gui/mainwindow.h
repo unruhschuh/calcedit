@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "qsourcehighliter.h"
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
@@ -20,5 +21,8 @@ class MainWindow : public QMainWindow
 
   public slots:
     void updateCalculation();
+
+  private:
+    QSourceHighlite::QSourceHighliter * m_highlighter;
 };
 #endif // MAINWINDOW_H

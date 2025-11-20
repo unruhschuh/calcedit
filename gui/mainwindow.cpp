@@ -14,6 +14,10 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->action_Variables, &QAction::triggered, [this](){ ui->dockWidget->show(); });
   connect(ui->input, &CalcEditEdit::currentResult, [this](QString s){ statusBar()->showMessage(s); });
 
+  m_highlighter = new QSourceHighlite::QSourceHighliter(ui->input->document());
+  m_highlighter->setCurrentLanguage(QSourceHighlite::QSourceHighliter::CodeC);
+  m_highlighter->setTheme(QSourceHighlite::QSourceHighliter::Themes::Monokai);
+
   ui->input->setPlainText(
     "// Comments start with double slash\n"
     "// Each non-empty line is an expression which is evaluated and the result\n"
