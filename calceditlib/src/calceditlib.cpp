@@ -4,6 +4,7 @@
 #include "exprtk_complex_adaptor.hpp"
 #include "exprtk.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <sstream>
 #include <regex>
@@ -147,6 +148,37 @@ struct my_usr final : public parser_t::unknown_symbol_resolver
 };
 #endif
 
+struct timeout_loop_rtc final : exprtk::loop_runtime_check
+{
+    using time_point_t =
+    std::chrono::time_point<std::chrono::steady_clock>;
+
+    std::size_t iterations_ = 0;
+    time_point_t timeout_tp_;
+
+    bool check() override
+    {
+      if (std::chrono::steady_clock::now() >= timeout_tp_)
+      {
+        // handle_runtime_violation shall be invoked
+        return false;
+      }
+
+      return true;
+    }
+
+    void handle_runtime_violation
+    (const exprtk::loop_runtime_check::violation_context &) override
+    {
+      throw std::runtime_error("Loop timed out");
+    }
+
+    void set_timeout_time(const time_point_t& timeout_tp)
+    {
+      timeout_tp_ = timeout_tp;
+    }
+};
+
 std::string toString(cmplx::complex_t x)
 {
   if (x.c_.imag() == 0.0)
@@ -281,14 +313,29 @@ void calculate(
       expression.register_symbol_table(symbol_table);
       my_usr<cmplx::complex_t> musr(variables, vectors);
       //parser_t parser(settings_t::compile_all_opts - settings_t::e_commutative_check);
+
+      timeout_loop_rtc loop_rtc;
+      loop_rtc.loop_set =  exprtk::loop_runtime_check::e_all_loops;
+      loop_rtc.max_loop_iterations = 100000;
+
       parser_t parser;
+      parser.register_loop_runtime_check(loop_rtc);
       parser.enable_unknown_symbol_resolver(&musr);
       parser.settings().disable_commutative_check();
+      const auto max_duration = std::chrono::seconds(5);
       if (parser.compile(parser_input, expression))
       {
-        variables["ans"] = expression.value();
+        loop_rtc.set_timeout_time(std::chrono::steady_clock::now() + max_duration);
+        try {
+          variables["ans"] = expression.value();
+          resultString += toString(variables["ans"]);
+        }
+        catch(std::runtime_error& exception)
+        {
+          resultString += "Exception: ";
+          resultString += exception.what();
+        }
         //resultString += fmt::format("{} + {}", variables["ans"].c_.real(), variables["ans"].c_.imag());
-        resultString += toString(variables["ans"]);
         std::vector<std::pair<std::string,cmplx::complex_t>> variable_list;
         unknown_var_symbol_table.get_variable_list(variable_list);
         for (auto & v : variable_list)
