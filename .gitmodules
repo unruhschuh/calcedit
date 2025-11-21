@@ -9,4 +9,4 @@
 	url = https://github.com/fmtlib/fmt.git
 [submodule "deps/QSourceHighlite"]
 	path = deps/QSourceHighlite
-	url = https://github.com/Waqar144/QSourceHighlite.git
+	url = git@github.com:unruhschuh/QSourceHighlite.git

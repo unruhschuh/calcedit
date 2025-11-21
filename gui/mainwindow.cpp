@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->input, &CalcEditEdit::currentResult, [this](QString s){ statusBar()->showMessage(s); });
 
   m_highlighter = new QSourceHighlite::QSourceHighliter(ui->input->document());
-  m_highlighter->setCurrentLanguage(QSourceHighlite::QSourceHighliter::CodeC);
+  m_highlighter->setCurrentLanguage(QSourceHighlite::QSourceHighliter::CodeExprtk);
   m_highlighter->setTheme(QSourceHighlite::QSourceHighliter::Themes::Monokai);
 
   ui->input->setPlainText(
