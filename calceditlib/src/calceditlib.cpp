@@ -255,6 +255,29 @@ struct arg final : public exprtk::ifunction<T>
   }
 };
 
+template <typename T, int radix>
+struct hex final : public exprtk::igeneric_function<T>
+{
+  typedef exprtk::igeneric_function<T> igenfunct_t;
+  typedef typename igenfunct_t::generic_type generic_t;
+  typedef typename igenfunct_t::parameter_list_t parameter_list_t;
+  typedef typename generic_t::string_view string_t;
+
+  hex()
+    : exprtk::igeneric_function<T>("S")
+  {}
+
+  inline T operator()(parameter_list_t parameters) override
+  {
+    if (parameters.size() && parameters[0].type == exprtk::type_store<T>::e_string)
+    {
+      string_t tmp(parameters[0]);
+      return T(std::strtoll(tmp.begin(), nullptr, radix));
+    }
+    return T(0.0);
+  }
+};
+
 void calculate(
     const std::string & input,
     std::map<std::string, cmplx::complex_t> & variables,
@@ -295,10 +318,16 @@ void calculate(
       imag<cmplx::complex_t> imag_fun;
       conj<cmplx::complex_t> conj_fun;
       arg<cmplx::complex_t> arg_fun;
+      hex<cmplx::complex_t, 16> hex_fun;
+      hex<cmplx::complex_t, 8> oct_fun;
+      hex<cmplx::complex_t, 2> bin_fun;
       symbol_table.add_function("real", real_fun);
       symbol_table.add_function("imag", imag_fun);
       symbol_table.add_function("conj", conj_fun);
       symbol_table.add_function("arg", arg_fun);
+      symbol_table.add_function("hex", hex_fun);
+      symbol_table.add_function("oct", oct_fun);
+      symbol_table.add_function("bin", bin_fun);
       //symbol_table.add_constants();
       for (auto & v : variables)
       {
