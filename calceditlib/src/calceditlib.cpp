@@ -4,6 +4,7 @@
 #include "exprtk_complex_adaptor.hpp"
 #include "exprtk.hpp"
 
+#include <cerrno>
 #include <chrono>
 #include <iostream>
 #include <sstream>
@@ -256,14 +257,14 @@ struct arg final : public exprtk::ifunction<T>
 };
 
 template <typename T, int radix>
-struct hex final : public exprtk::igeneric_function<T>
+struct string_to_number final : public exprtk::igeneric_function<T>
 {
   typedef exprtk::igeneric_function<T> igenfunct_t;
   typedef typename igenfunct_t::generic_type generic_t;
   typedef typename igenfunct_t::parameter_list_t parameter_list_t;
   typedef typename generic_t::string_view string_t;
 
-  hex()
+  string_to_number()
     : exprtk::igeneric_function<T>("S")
   {}
 
@@ -272,9 +273,74 @@ struct hex final : public exprtk::igeneric_function<T>
     if (parameters.size() && parameters[0].type == exprtk::type_store<T>::e_string)
     {
       string_t tmp(parameters[0]);
-      return T(std::strtoll(tmp.begin(), nullptr, radix));
+      errno = 0;
+      char *p_end{};
+      auto result = std::strtoull(tmp.begin(), &p_end, radix);
+      if (tmp.begin() == p_end || p_end != tmp.begin() + strlen(tmp.begin()) || errno == ERANGE)
+      {
+        return {std::numeric_limits<long double>::quiet_NaN(),0};
+      }
+
+      return {static_cast<long double>(result), 0};
     }
-    return T(0.0);
+    return {std::numeric_limits<long double>::quiet_NaN(),0};
+  }
+};
+
+
+template <typename T>
+struct string_to_number<T, 2> final : public exprtk::igeneric_function<T>
+{
+  typedef exprtk::igeneric_function<T> igenfunct_t;
+  typedef typename igenfunct_t::generic_type generic_t;
+  typedef typename igenfunct_t::parameter_list_t parameter_list_t;
+  typedef typename generic_t::string_view string_t;
+
+  string_to_number()
+    : exprtk::igeneric_function<T>("S")
+  {}
+
+  inline T operator()(parameter_list_t parameters) override
+  {
+    T result_error = {std::numeric_limits<long double>::quiet_NaN(),0};
+    if (parameters.size() && parameters[0].type == exprtk::type_store<T>::e_string)
+    {
+      string_t tmp(parameters[0]);
+      if (tmp.size() == 0 || tmp.size() > 64)
+      {
+        return result_error;
+      }
+      uint64_t result = 0;
+      int add = 0;
+      if (tmp[0] == '1')
+      {
+        add = 1;
+      }
+      for (size_t i = 0; i < tmp.size(); i++)
+      {
+        switch (tmp[i])
+        {
+          case '0':
+            result = result << 1 | add;
+            break;
+          case '1':
+            result = result << 1 | !add;
+            break;
+          default:
+            return result_error;
+        }
+      }
+
+      if (add)
+      {
+        result = - result - 1;
+      }
+
+      int64_t signed_result = result;
+
+      return {static_cast<long double>(signed_result), 0};
+    }
+    return result_error;
   }
 };
 
@@ -318,9 +384,9 @@ void calculate(
       imag<cmplx::complex_t> imag_fun;
       conj<cmplx::complex_t> conj_fun;
       arg<cmplx::complex_t> arg_fun;
-      hex<cmplx::complex_t, 16> hex_fun;
-      hex<cmplx::complex_t, 8> oct_fun;
-      hex<cmplx::complex_t, 2> bin_fun;
+      string_to_number<cmplx::complex_t, 16> hex_fun;
+      string_to_number<cmplx::complex_t, 8> oct_fun;
+      string_to_number<cmplx::complex_t, 2> bin_fun;
       symbol_table.add_function("real", real_fun);
       symbol_table.add_function("imag", imag_fun);
       symbol_table.add_function("conj", conj_fun);
